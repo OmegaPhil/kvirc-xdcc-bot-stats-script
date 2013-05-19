@@ -2,41 +2,294 @@
 # =====================
 
 # Version: 0.01
+# TODO: GPL3+
+
+
+# EVENTS BLOCK
+# Intercepting start events
+event(OnKVIrcStartup,XDCCBotStatsScript)
+{
+    # Running XDCCBotStatsScript::Startup
+    XDCCBotStatsScript::Startup
+}
+
+# Intercepting CTCP status replies
+# Example: 'CTCP stat reply from XDCCBot [~BotNick@normally.a.vhost]: 1045 1355566 121234 180989072 9 100 0 500 0 0 99406.4 0 566486 4720.7 95907.9'
+event(OnCTCPReply,XDCCBotStatsScript)
+{
+    /*
+    $0 = source nick
+    $1 = source user
+    $2 = source host
+    $3 = target
+    $4 = ctcp type
+    $5- = ctcp parameters
+    */
+
+    # Exiting if the script is off
+    if (%XDCCBotStatsScript_Settings{"Status"} == "Off") return
+
+    # Debug code
+    # echo "CTCP intercepted:\nType: "$4"\nParameters: "$5-
+
+    # Exiting if the reply is not to a status request
+    if ($4 != "stat") return
+
+    # Setting xDCCBot
+    %xDCCBot = $0
+
+    # Generating bot identifier and checking if it is registered
+    %xDCCBotIdentifier = $context.networkName" "%xDCCBot
+    if (%XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} == "")
+    {
+        # It isn't - warning user and exiting
+        warning "XDCC Bot Stats Script - XDCC bot '"%xDCCBot"' appears to have responded to a CTCP status request, however it is not registered with this script"
+        return
+    }
+
+    # Extracting individual status parameters into an array
+    %xDCCBotData[] = $str.split(" ", $5-)
+
+    # Warning user and exiting when status reply has an invalid number of parameters
+    if (%xDCCBotData[]# != 15)
+    {
+        warning "XDCC Bot Stats Script - XDCC bot '"%xDCCBot"' has responded to a CTCP status request with an invalid number of parameters ("%xDCCBotData[]#")"
+        return
+    }
+
+    # Making sure the root bot stats item is in the hash
+    # if (%XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier} == "") %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier} = %xDCCBotIdentifier
+
+    # Recording stats data. Note that two reported items are always 0 (items 8 and 9 of the array) - hence 15 items and 13 recorded
+    %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"updated"} = $unixtime
+    %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"numberOfSlotsInUse"} = %xDCCBotData[4]
+    %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"totalSlots"} = %xDCCBotData[5]
+    %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"numberInMainQueue"} = %xDCCBotData[6]
+    %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"sizeOfMainQueue"} = %xDCCBotData[7]
+    %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"packSpeedRecord"} = %xDCCBotData[10]
+    %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"serverMessageQueue"} = %xDCCBotData[11]
+    %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"dataSentToNetwork120Secs"} = %xDCCBotData[12]
+    %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"averageBandwidth120Secs"} = %xDCCBotData[13]
+    %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"recordAverageBandwidth"} = %xDCCBotData[14]
+    %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"numberPacks"} = %xDCCBotData[0]
+    %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"offeredPacksSize"} = %xDCCBotData[1]
+    %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"completedTransfers"} = %xDCCBotData[2]
+    %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"transfered"} = %xDCCBotData[3]
+
+    # Quashing reply so that it doesnt turn up in the GUI
+    halt
+}
+
+# Intercepting failure to send CTCP command as bot isn't on server
+# Example: ':irc.rizon.no 401 OmegaPhil thisuserdoesnotexist :No such nick/channel'
+event(401,XDCCBotStatsScript)
+{
+    # Exiting if script is currently off
+    if (%XDCCBotStatsScript_Settings{"Status"} == "Off") return
+
+    # Setting xDCCBotIdentifier
+    %xDCCBotIdentifier = $context.networkName" "$3
+
+    # Exiting if the nick isn't a registered XDCC bot
+    if (%XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} == "") return
+
+    # A registered XDCC bot had its stats requested, but it wasnt on the server
+    # Updating request delay (with a maximum of 10 minutes) and setting the next acceptable request time
+    if (%XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"requestDelay"} == "")
+    {
+        %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"requestDelay"} = 1
+    }
+    else
+    {
+        if (%XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"requestDelay"} < 10) %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"requestDelay"}++
+    }
+    %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"nextStatsRequest"} = $unixtime + (60 * %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"requestDelay"})
+}
+
+
+# ALIASES BLOCK
+# XDCCBotStatsScript::RequestStats alias
+alias(XDCCBotStatsScript::RequestStats)
+{
+    # Exiting if the script is off
+    if (%XDCCBotStatsScript_Settings{"Status"} == "Off") return
+
+    # Building up a hash of currently-available networks for quick lookup and rebinding
+    foreach(%context, $context.list)
+    {
+        # Adding only if a networkName is present (the last context currently doesnt have one...)
+        if ($context.networkName(%context) != "") %networks{$context.networkName(%context)} = %context
+    }
+
+    # Looping for all registered bot records, sorted in network order to reduce rebinding
+    foreach(%xDCCBotDetails, $sort($keys(%XDCCBotStatsScript_XDCCBots{"index"})))
+    {
+        # Splitting into network and nick
+        %xDCCBotDetails[] = $str.split(" ", %xDCCBotDetails)
+
+        # Debug code
+        # echo "Found bot, network: "%xDCCBotDetails[0]", bot: "%xDCCBotDetails[1]
+
+        # Moving to the next bot if the network isn't currently available
+        if (%networks{%xDCCBotDetails[0]} == "") continue
+
+        # Checking if this bot was previously found to not be present on the server
+        if (%XDCCBotStatsScript_XDCCBots{%xDCCBotDetails}{"nextStatsRequest"} != "")
+        {
+            # It was - skipping if the next request delay has not been reached
+            if ($unixtime < %XDCCBotStatsScript_XDCCBots{%xDCCBotDetails}{"nextStatsRequest"}) continue
+
+            # Can now request stats, cleaning up
+            %XDCCBotStatsScript_XDCCBots{%xDCCBotDetails}{"nextStatsRequest"} = ""
+            %XDCCBotStatsScript_XDCCBots{%xDCCBotDetails}{"requestDelay"} = ""
+        }
+
+        # Checking if we are bound to the correct network
+        if ($context.networkName != %xDCCBotDetails[0])
+        {
+            # We aren't - attempting to rebind
+            %windowID = $console(%networks{%xDCCBotDetails[0]})
+            rebind %windowID
+
+            # Skipping to next bot if the rebind failed
+            if ($context.networkName != %xDCCBotDetails[0])
+            {
+                warning "XDCC Bot Stats Script - Attempt to rebind to the '"%xDCCBotDetails[0]"' network in order to issue the CTCP status command to '"%xDCCBotDetails[1]"' failed!"
+                continue
+            }
+        }
+
+        # We are on the right network - issuing CTCP status command to the bot
+        ctcp %xDCCBotDetails[1] status
+    }
+}
+
+# XDCCBotStatsScript::Save alias
+alias(XDCCBotStatsScript::Save)
+{
+    # Opening config file
+    %configFileID = $config.open($file.localdir("/scripts/xdcc_bot_stats_script_settings"))
+
+    # Saving settings
+    config.clearsection %configFileID "KVIrc"
+    config.write %configFileID "XDCCBotStatsScript_Settings" $serialize(%XDCCBotStatsScript_Settings)
+
+    # Saving XDCC Bots data
+    config.clearsection %configFileID "XDCCBots"
+    config.setsection %configFileID "XDCCBots"
+    config.write %configFileID "XDCCBotStatsScript_XDCCBots" $serialize(%XDCCBotStatsScript_XDCCBots)
+
+    # Saving XDCC Stats data
+    config.clearsection %configFileID "XDCCStats"
+    config.setsection %configFileID "XDCCStats"
+    config.write %configFileID "XDCCBotStatsScript_XDCCStats" $serialize(%XDCCBotStatsScript_XDCCStats)
+
+    # Committing settings
+    config.close %configFileID
+}
+
+# XDCCBotStatsScript::Startup alias
+alias(XDCCBotStatsScript::Startup)
+{
+    # Ensuring that dependencies are present
+    if ($aliasBody("CommonScriptingServices::uninstall::uninstall") == "") error "XDCC Bot Stats Script - Common Scripting Services has not been detected - this is required for this script to run"
+
+    # Making sure settings directory exists
+    if ($file.exists($file.localdir("/scripts/")) == 0) file.mkdir $file.localdir("/scripts/")
+
+    # Loading settings if the config file exists
+    if ($file.exists($file.localdir("/scripts/xdcc_bot_stats_script_settings")) == $true)
+    {
+        # Opening config file
+        %configFileID = $config.open($file.localdir("/scripts/xdcc_bot_stats_script_settings"))
+
+        # Loading settings
+        %XDCCBotStatsScript_Settings = $unserialize($config.read(%configFileID, "XDCCBotStatsScript_Settings"))
+
+        # Loading XDCC Bots data
+        config.setsection %configFileID "XDCCBots"
+        %XDCCBotStatsScript_XDCCBots = $unserialize($config.read(%configFileID, "XDCCBotStatsScript_XDCCBots"))
+
+        # Loading XDCC Stats data
+        config.setsection %configFileID "XDCCStats"
+        %XDCCBotStatsScript_XDCCStats = $unserialize($config.read(%configFileID, "XDCCBotStatsScript_XDCCStats"))
+
+        # Closing configuration file
+        config.close %configFileID
+    }
+
+    # Initialising hash data
+    if (%XDCCBotStatsScript_Settings{"Status"} == "") %XDCCBotStatsScript_Settings{"Status"} = "On"
+
+    # Intialising timer
+    if (%XDCCBotStatsScript_Settings{"Status"} == "On")
+    {
+        timer -p ("XDCCBotStatsScript_StatsTimer", 30000)
+        {
+            # Requesting stats
+            XDCCBotStatsScript::RequestStats
+        }
+    }
+
+    # Carrying out first stats request
+    XDCCBotStatsScript::RequestStats
+}
+
+# Uninstaller alias
+alias(XDCCBotStatsScript::uninstall::uninstall)
+{
+    # All events and aliases should be uninstalled here
+    alias(XDCCBotStatsScript::RequestStats) {}
+    alias(XDCCBotStatsScript::Save) {}
+    alias(XDCCBotStatsScript::Startup) {}
+    alias(XDCCBotStatsScript::uninstall::uninstall) {}
+    event(OnCTCPReply,XDCCBotStatsScript) {}
+    event(OnKVIrcStartup,XDCCBotStatsScript) {}
+    event(401,XDCCBotStatsScript) {}
+
+    # Clearing global variables
+    %XDCCBotStatsScript_XDCCBots = ""
+    %XDCCBotStatsScript_XDCCStats = ""
+    %XDCCBotStatsScript_Settings = ""
+}
 
 
 /*
 COMMENTS
 
-irofferDinoexTerminalEmulationScript_XDCCBots format:
+XDCCBotStatsScript_XDCCBots format:
 
-Item: index. Data: Hash of XDCC bots registered with the script, the data is of the form '<network name>|<channel>|<nick>' - from now on this will be refered to as the bot identifier.
+Item: {index}. Data: Hash of XDCC bots registered with the script, the data is of the form '<network name> <nick>' - from now on this will be refered to as the bot identifier. Channel is not included, as the bot can idle on multiple channels
 
-Item: <Bot identifier>. Data: Hash of information associated with the bot.
+Item: {<Bot identifier>}. Data: Hash of information associated with the bot.
 
-    Item: maxUploadBandwidth. Data: Stores the bot's configured maximum upload speed (used by !xdccstats etc)
-    Item: password. Data: DCC admin chat password.
-    Item: stats. Data: Hash containing statistics extracted from the bot - see the 'status' command in the original iroffer documentation (http://iroffer.org/docs/admin.html), the "/ctcp bot status" bit
+    Item: {maxUploadBandwidth}. Data: Stores the bot's configured maximum upload speed (used by !xdccstats etc)
+    Item: {nextStatsRequest). Data: If present, stores the earliest acceptable time to request more stats (e.g. the bot does not exist on the server)
+    Item: {password}. Data: DCC admin chat password.
+    Item: {requestDelay}. Data: If present, records the number of minutes to delay further stats requests by, increases on non-existent nick between 1 and 10
+    Item: {stats}. Data: Hash containing statistics extracted from the bot - see the 'status' command in the original iroffer documentation (http://iroffer.org/docs/admin.html), the "/ctcp bot status" bit
 
-        Item: numberOfSlotsInUse.
-        Item: totalSlots.
-        Item: numberInMainQueue.
-        Item: sizeOfMainQueue.
-        Item: packSpeedRecord. Data: KB/Sec value.
-        Item: serverMessageQueue. Data: Number of lines in send to server queue.
-        Item: dataSentToNetwork120Secs. Data: Amount of data sent to network in past 120 seconds in KB.
-        Item: averageBandwidth120Secs. Data: average bandwidth of past 120 seconds in KB/Sec.
-        Item: recordAverageBandwidth. Data: KB/Sec value.
-        Item: numberPacks. Data: Number of packs offered.
-        Item: offeredPacksSize. Data: Total size of offered packs in MB.
-        Item: completedTransfers. Data: Total completed transfers.
-        Item: transfered. Data: Total transfered in MB.
+        Item: {updated}. Data: $unixtime of the last update.
+        Item: {numberOfSlotsInUse}
+        Item: {totalSlots}
+        Item: {numberInMainQueue}
+        Item: {sizeOfMainQueue}
+        Item: {packSpeedRecord}. Data: KB/Sec value.
+        Item: {serverMessageQueue}. Data: Number of lines in send to server queue.
+        Item: {dataSentToNetwork120Secs}. Data: Amount of data sent to network in past 120 seconds in KB.
+        Item: {averageBandwidth120Secs}. Data: average bandwidth of past 120 seconds in KB/Sec.
+        Item: {recordAverageBandwidth}. Data: KB/Sec value.
+        Item: {numberPacks}. Data: Number of packs offered.
+        Item: {offeredPacksSize}. Data: Total size of offered packs in MB.
+        Item: {completedTransfers}. Data: Total completed transfers.
+        Item: {transfered}. Data: Total transfered in MB.
 
 
-irofferDinoexTerminalEmulationScript_XDCCStats format:
+XDCCBotStatsScript_XDCCStats format:
 
-Item: index. Data: Hash of channels where !XDCCstats is enabled, the data is of the form '<network name>|<channel>' - from now on this will be refered to as the channel identifier.
+Item: {index}. Data: Hash of channels where !XDCCstats is enabled, the data is of the form '<network name> <channel>' - from now on this will be refered to as the channel identifier.
 
-Item: <Channel identifier>. Data: Hash containing settings for the channel.
+Item: {<Channel identifier>}. Data: Hash containing settings for the channel.
 
-    Item: ignoreBelowHops. Presence indicates that only hops and above can use the !XDCCstats trigger.
+    Item: {ignoreBelowHops}. Presence indicates that only hops and above can use the !XDCCstats trigger.
 */
