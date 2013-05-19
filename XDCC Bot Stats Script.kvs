@@ -1,0 +1,42 @@
+# XDCC Bot Stats Script
+# =====================
+
+# Version: 0.01
+
+
+/*
+COMMENTS
+
+irofferDinoexTerminalEmulationScript_XDCCBots format:
+
+Item: index. Data: Hash of XDCC bots registered with the script, the data is of the form '<network name>|<channel>|<nick>' - from now on this will be refered to as the bot identifier.
+
+Item: <Bot identifier>. Data: Hash of information associated with the bot.
+
+    Item: maxUploadBandwidth. Data: Stores the bot's configured maximum upload speed (used by !xdccstats etc)
+    Item: password. Data: DCC admin chat password.
+    Item: stats. Data: Hash containing statistics extracted from the bot - see the 'status' command in the original iroffer documentation (http://iroffer.org/docs/admin.html), the "/ctcp bot status" bit
+
+        Item: numberOfSlotsInUse.
+        Item: totalSlots.
+        Item: numberInMainQueue.
+        Item: sizeOfMainQueue.
+        Item: packSpeedRecord. Data: KB/Sec value.
+        Item: serverMessageQueue. Data: Number of lines in send to server queue.
+        Item: dataSentToNetwork120Secs. Data: Amount of data sent to network in past 120 seconds in KB.
+        Item: averageBandwidth120Secs. Data: average bandwidth of past 120 seconds in KB/Sec.
+        Item: recordAverageBandwidth. Data: KB/Sec value.
+        Item: numberPacks. Data: Number of packs offered.
+        Item: offeredPacksSize. Data: Total size of offered packs in MB.
+        Item: completedTransfers. Data: Total completed transfers.
+        Item: transfered. Data: Total transfered in MB.
+
+
+irofferDinoexTerminalEmulationScript_XDCCStats format:
+
+Item: index. Data: Hash of channels where !XDCCstats is enabled, the data is of the form '<network name>|<channel>' - from now on this will be refered to as the channel identifier.
+
+Item: <Channel identifier>. Data: Hash containing settings for the channel.
+
+    Item: ignoreBelowHops. Presence indicates that only hops and above can use the !XDCCstats trigger.
+*/
