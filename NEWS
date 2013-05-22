@@ -1,0 +1,2 @@
+v0.01 (22.05.13):
+Initial public release - Script is now capable of gathering stats from registered bots, processing and making available the data in normal channel and other triggers.
