@@ -1328,7 +1328,7 @@ alias(XDCCBotStatsScript::Startup)
     if (%XDCCBotStatsScript_Settings{"Status"} == "") %XDCCBotStatsScript_Settings{"Status"} = "On"
     %XDCCBotStatsScript_Settings{"Name"} = "XDCC Bot Stats Script"
     %XDCCBotStatsScript_Settings{"Version"} = "0.01"
-    %XDCCBotStatsScript_Settings{"URL"} = "https://github.com/OmegaPhil/xdcc-bot-stats-script"
+    %XDCCBotStatsScript_Settings{"URL"} = "https://github.com/OmegaPhil/kvirc-xdcc-bot-stats-script"
 
     # Intialising timer
     if (%XDCCBotStatsScript_Settings{"Status"} == "On")
