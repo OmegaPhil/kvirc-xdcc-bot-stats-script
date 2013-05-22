@@ -46,5 +46,48 @@
 <edge STYLE="bezier" WIDTH="thin"/>
 </node>
 </node>
+<node TEXT="GUI" POSITION="left" ID="ID_1987771094" CREATED="1368993595534" MODIFIED="1368993598105" COLOR="#0033ff">
+<font SIZE="18"/>
+<edge STYLE="sharp_bezier" WIDTH="8"/>
+<node TEXT="Bot registration" ID="ID_713689099" CREATED="1368993599187" MODIFIED="1368993609280" COLOR="#00b439">
+<font SIZE="16"/>
+<edge STYLE="bezier" WIDTH="thin"/>
+<node TEXT="Nicklist popup" ID="ID_1345416449" CREATED="1368993625932" MODIFIED="1368993631831" COLOR="#990000">
+<font SIZE="14"/>
+</node>
+</node>
+<node TEXT="Bot removal" ID="ID_1857732131" CREATED="1368993609651" MODIFIED="1368993616828" COLOR="#00b439">
+<font SIZE="16"/>
+<edge STYLE="bezier" WIDTH="thin"/>
+<node TEXT="Nicklist popup" ID="ID_1644028046" CREATED="1368993633604" MODIFIED="1368993638791" COLOR="#990000">
+<font SIZE="14"/>
+</node>
+<node TEXT="Full dialog - bot may not be on the server" ID="ID_250520215" CREATED="1368993639247" MODIFIED="1368993652022" COLOR="#990000">
+<font SIZE="14"/>
+</node>
+</node>
+<node TEXT="Bots listing" ID="ID_1054619688" CREATED="1368993618445" MODIFIED="1368993621024" COLOR="#00b439">
+<font SIZE="16"/>
+<edge STYLE="bezier" WIDTH="thin"/>
+<node TEXT="Standard echo to the current window" ID="ID_1473554229" CREATED="1368993653897" MODIFIED="1368993663438" COLOR="#990000">
+<font SIZE="14"/>
+</node>
+</node>
+<node TEXT="XDCC stats enabling/settings editing" ID="ID_1634486866" CREATED="1368993728135" MODIFIED="1368993740706" COLOR="#00b439">
+<font SIZE="16"/>
+<edge STYLE="bezier" WIDTH="thin"/>
+<node TEXT="Channel popup" ID="ID_124971233" CREATED="1368993741633" MODIFIED="1368993744707" COLOR="#990000">
+<font SIZE="14"/>
+</node>
+</node>
+</node>
+<node TEXT="Limitations" POSITION="left" ID="ID_620090245" CREATED="1369144490887" MODIFIED="1369144495378" COLOR="#0033ff">
+<font SIZE="18"/>
+<edge STYLE="sharp_bezier" WIDTH="8"/>
+<node TEXT="CTCP status only allows for 2 minute average bandwidth" ID="ID_317292530" CREATED="1369144496574" MODIFIED="1369144519900" COLOR="#00b439">
+<font SIZE="16"/>
+<edge STYLE="bezier" WIDTH="thin"/>
+</node>
+</node>
 </node>
 </map>

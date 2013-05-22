@@ -1,16 +1,37 @@
 # XDCC Bot Stats Script
 # =====================
 
-# Version: 0.01
+# Version: 0.01 - remember to update this in the main hash
 # TODO: GPL3+
+# TODO: Basic DCC admin chat work - ability to open and respond to password prompt
+# TODO: Logical pass
+# TODO: Basic documentation on how to use the script. Announce on the KVIrc mailing list after this?
 
 
 # EVENTS BLOCK
-# Intercepting start events
-event(OnKVIrcStartup,XDCCBotStatsScript)
+# Intercepting channel messages
+event(OnChannelMessage,XDCCBotStatsScript)
 {
-    # Running XDCCBotStatsScript::Startup
-    XDCCBotStatsScript::Startup
+    # $0 = source nick
+    # $1 = source username
+    # $2 = source host
+    # $3 = message
+    # $4 = [target mode prefixes]
+
+    # Exiting if script is currently off
+    if (%XDCCBotStatsScript_Settings{"Status"} == "Off") return
+
+    # Detecting XDCC stats triggers and routing to the main alias
+    if ($str.left($3, 15) == "!xdccstatstotal")
+    {
+        XDCCBotStatsScript "xdccstatstotal" $target $0
+        return
+    }
+    if ($str.left($3, 10) == "!xdccstats")
+    {
+        XDCCBotStatsScript "xdccstats" $target $0
+        return
+    }
 }
 
 # Intercepting CTCP status replies
@@ -30,7 +51,7 @@ event(OnCTCPReply,XDCCBotStatsScript)
     if (%XDCCBotStatsScript_Settings{"Status"} == "Off") return
 
     # Debug code
-    # echo "CTCP intercepted:\nType: "$4"\nParameters: "$5-
+    # echo "CTCP intercepted:\nType: $4\nBot: $0\nParameters: $5-"
 
     # Exiting if the reply is not to a status request
     if ($4 != "stat") return
@@ -43,7 +64,7 @@ event(OnCTCPReply,XDCCBotStatsScript)
     if (%XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} == "")
     {
         # It isn't - warning user and exiting
-        warning "XDCC Bot Stats Script - XDCC bot '"%xDCCBot"' appears to have responded to a CTCP status request, however it is not registered with this script"
+        warning "XDCC Bot Stats Script - XDCC bot '%xDCCBot' appears to have responded to a CTCP status request, however it is not registered with this script"
         return
     }
 
@@ -53,12 +74,12 @@ event(OnCTCPReply,XDCCBotStatsScript)
     # Warning user and exiting when status reply has an invalid number of parameters
     if (%xDCCBotData[]# != 15)
     {
-        warning "XDCC Bot Stats Script - XDCC bot '"%xDCCBot"' has responded to a CTCP status request with an invalid number of parameters ("%xDCCBotData[]#")"
+        warning "XDCC Bot Stats Script - XDCC bot '%xDCCBot' has responded to a CTCP status request with an invalid number of parameters (%xDCCBotData[]#)"
         return
     }
 
-    # Making sure the root bot stats item is in the hash
-    # if (%XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier} == "") %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier} = %xDCCBotIdentifier
+    # Debug code
+    # echo "Average bandwidth 120 secs: %xDCCBotData[13]"
 
     # Recording stats data. Note that two reported items are always 0 (items 8 and 9 of the array) - hence 15 items and 13 recorded
     %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"updated"} = $unixtime
@@ -78,6 +99,34 @@ event(OnCTCPReply,XDCCBotStatsScript)
 
     # Quashing reply so that it doesnt turn up in the GUI
     halt
+}
+
+# Intercepting start events
+event(OnKVIrcStartup,XDCCBotStatsScript)
+{
+    # Running XDCCBotStatsScript::Startup
+    XDCCBotStatsScript::Startup
+}
+
+# Intercepting inputted text
+event(OnTextInput,XDCCBotStatsScript)
+{
+    # $0 = text
+
+    # Exiting if script is currently off
+    if (%XDCCBotStatsScript_Settings{"Status"} == "Off") return
+
+    # Detecting XDCC stats triggers and routing to the main alias
+    if ($str.left($0, 15) == "!xdccstatstotal")
+    {
+        XDCCBotStatsScript "xdccstatstotal" $target $my.nick
+        return
+    }
+    if ($str.left($0, 10) == "!xdccstats")
+    {
+        XDCCBotStatsScript "xdccstats" $target $my.nick
+        return
+    }
 }
 
 # Intercepting failure to send CTCP command as bot isn't on server
@@ -108,6 +157,1047 @@ event(401,XDCCBotStatsScript)
 
 
 # ALIASES BLOCK
+# CanGetBotData alias
+# Usage: CanGetBotData <network> <XDCC bot>
+alias(CanGetBotData)
+{
+    # Making sure a network has been passed
+    if ($0 == "")
+    {
+        # It hasn't - warning user and exiting
+        warning "XDCC Bot Stats Script - A network must be specified when calling CanGetBotData"
+        return
+    }
+
+    # Setting network
+    %network = $0
+
+    # Making sure an XDCC bot has been passed
+    if ($1 == "")
+    {
+        # It hasn't - warning user and exiting
+        warning "XDCC Bot Stats Script - An XDCC bot must be specified when calling CanGetBotData. Parameters: '$0-'"
+        return
+    }
+
+    # Setting xDCCBot
+    %xDCCBot = $1
+
+    # Generating xDCCBotIdentifier
+    %xDCCBotIdentifier = %network" "%xDCCBot
+
+    # Returning false if the bot isn't registered or its last update was over 2 minutes ago. Don't use GetXDCCBotData to fetch updated - GetXDCCBotData calls this alias!
+    if (%XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} == "" || %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"} == "" || %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"updated"} == "" || %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"updated"} < ($unixtime - 2 * 60))
+    {
+        return $false
+    }
+    else
+    {
+        # Bot is registered and is uptodate - returning $true
+        return $true
+    }
+}
+
+# GetDynamicXDCCBotStats alias
+# Returns a coloured/formatted bot stats string that can be spammed anywhere etc
+# Usage: GetDynamicXDCCBotStats <network> <XDCC bot> <XDCC bot 1>...
+alias(GetDynamicXDCCBotStats)
+{
+    # Initialising variables - everything is a float (except max upload speed) so that the trivial divisions later do not truncate to 0 (...)
+    %slotsInUse = 0.0
+    %freeSlots = 0.0
+    %totalSlots = 0.0
+    %numberInMainQueue = 0.0
+    %totalQueues = 0.0
+    # %idlenumberInMainQueue = 0.0
+    # %tempIdlenumberInMainQueue = 0.0
+    # %freeIdleQueues = 0.0
+    # %totalIdleQueues = 0.0
+    # %tempTotalIdleQueues = 0.0
+    %twoMinAvgUploadBandwidth = 0.0
+    %tempTwoMinAvgUploadBandwidth = 0.0
+    %maxUploadSpeed = 0
+    %tempMaxUploadSpeed = 0
+    %updatedAgo = -1
+
+    # Making sure a network has been passed
+    if ($0 == "")
+    {
+        # It hasn't - warning user and exiting
+        warning "XDCC Bot Stats Script - A network must be specified when calling GetDynamicXDCCBotStats"
+        return
+    }
+
+    # Setting network
+    %network = $0
+
+    # Making sure at least one XDCC bot has been passed
+    if ($1 == "")
+    {
+        # It hasn't - warning user and exiting
+        warning "XDCC Bot Stats Script - At least one XDCC bot must be specified when calling GetDynamicXDCCBotStats. Parameters: '$0-'"
+        return
+    }
+
+    # Generating array of passed bots
+    %xDCCBots[] = $str.split(" ", $1-)
+
+    # Debug code
+    # echo "\%xDCCBots: %xDCCBots"
+
+    # Looping over passed bots
+    foreach(%xDCCBot, %xDCCBots)
+    {
+        # Presence of the desired XDCC Bot (CanGetBotData) is ususally called prior to this function, so doing it here would be duplication
+
+        # Obtaining bot's maximum upload speed
+        %tempMaxUploadSpeed = $GetXDCCBotData(%network, %xDCCBot, "maxUploadBandwidth")
+
+        # Making sure maximum upload speed is available
+        if (%tempMaxUploadSpeed == "")
+        {
+            # It isn't - warning user and skipping bot
+            warning "XDCC Bot Stats Script - GetDynamicXDCCBotStats is attempting to process %xDCCBot's dynamic stats, however no maximum upload speed has been defined for this bot. Skipping..."
+            continue
+        }
+
+        # Obtaining bot data, with some data manipulation. Idle queue data isn't available through CTCP status. Note that the best bandwidth data is only a 2 minute average now!
+        %totalSlots = $(%totalSlots + $GetXDCCBotData(%network, %xDCCBot, "totalSlots"))
+        %slotsInUse = $(%slotsInUse + $GetXDCCBotData(%network, %xDCCBot, "numberOfSlotsInUse"))
+        %totalQueues = $(%totalQueues + $GetXDCCBotData(%network, %xDCCBot, "sizeOfMainQueue"))
+        %numberInMainQueue = $(%numberInMainQueue + $GetXDCCBotData(%network, %xDCCBot, "numberInMainQueue"))
+        # %tempTotalIdleQueues = $GetXDCCBotData(%network, %xDCCBot, TotalIdleQueues)
+        # %totalIdleQueues = $(%totalIdleQueues + %tempTotalIdleQueues))
+        # %tempIdlenumberInMainQueue = $GetXDCCBotData(%network, %xDCCBot, NumberOfIdlenumberInMainQueue)
+        # %idlenumberInMainQueue = $(%idlenumberInMainQueue + %tempIdlenumberInMainQueue)
+        %tempTwoMinAvgUploadBandwidth = $GetXDCCBotData(%network, %xDCCBot, "averageBandwidth120Secs")
+        %twoMinAvgUploadBandwidth = $(%twoMinAvgUploadBandwidth + %tempTwoMinAvgUploadBandwidth)
+        %tempUpdatedAgo = $($unixtime - $GetXDCCBotData(%network, %xDCCBot, "updated"))
+        if (%tempUpdatedAgo > %updatedAgo) %updatedAgo = %tempUpdatedAgo
+        %maxUploadSpeed = $(%maxUploadSpeed + %tempMaxUploadSpeed)
+
+        # Debug code
+        # echo "\%tempTwoMinAvgUploadBandwidth: %tempTwoMinAvgUploadBandwidth\n\%twoMinAvgUploadBandwidth: %twoMinAvgUploadBandwidth"
+        # echo "\%updatedAgo: %updatedAgo"
+    }
+
+    # Calculating free slots/queues
+    %freeSlots = $(%totalSlots - %slotsInUse)
+    if (%freeSlots < 0) %freeSlots = 0
+    %freeQueues = $(%totalQueues - %numberInMainQueue)
+    if (%freeQueues < 0) %freeQueues = 0
+    # %freeIdleQueues = $(%totalIdleQueues - %idleQueuesInUse)
+    # if (%freeIdleQueues < 0) %freeIdleQueues = 0
+
+    # Rounding upload bandwidth (courtesy of Common Scripting Services)
+    %twoMinAvgUploadBandwidth = $trueround(%twoMinAvgUploadBandwidth)
+
+    # Calculating average speed per user, returning without the silly precision floats are printed at. Everything is rounded to an integer, so we can just get rid of anything after the full stop
+    if (%slotsInUse == 0)
+    {
+        %avgSpeedPerUser = 0
+    }
+    else
+    {
+        %avgSpeedPerUser = $trueround($(%twoMinAvgUploadBandwidth / %slotsInUse))
+        %avgSpeedPerUser = $str.split(".", %avgSpeedPerUser)[0]
+    }
+
+    # Debug code
+    /*echo "\%freeSlots: %freeSlots\n\%totalSlots: %totalSlots"
+    echo "\%freeQueues: %freeQueues\n\%totalQueues: %totalQueues"
+    echo "\%maxUploadSpeed: %maxUploadSpeed\n\%slotsInUse: %slotsInUse"
+    echo "\%xDCCBots: %xDCCBots"*/
+
+    # Determining colours
+    if ($(%freeSlots / %totalSlots) > 0.5)
+    {
+        %slotsColour = "3"
+    }
+    else
+    {
+        if ($(%freeSlots / %totalSlots) > 0.25)
+        {
+            %slotsColour = "7"
+        }
+        else {
+            %slotsColour = "4"
+        }
+    }
+    if ($(%freeQueues / %totalQueues) > 0.5)
+    {
+        %queuesColour = "3"
+    }
+    else
+    {
+        if ($(%freeQueues / %totalQueues) > 0.25)
+        {
+            %queuesColour = "7"
+        }
+        else
+        {
+            %queuesColour = "4"
+        }
+    }
+    /*
+    if ($(%freeIdleQueues / %totalIdleQueues) > 0.5)
+    {
+        %idleQueuesColour = "3"
+    }
+    else
+    {
+        if ($(%freeIdleQueues / %totalIdleQueues) > 0.25)
+        {
+            %idleQueuesColour = "7"
+        }
+        else
+        {
+            %idleQueuesColour = "4"
+        }
+    }
+    */
+    if ($(%twoMinAvgUploadBandwidth / %maxUploadSpeed) > 0.75)
+    {
+        %bandwidthColour = "4"
+    }
+    else {
+        if ($(%twoMinAvgUploadBandwidth / %maxUploadSpeed) > 0.5)
+        {
+            %bandwidthColour = "7"
+        }
+        else
+        {
+            %bandwidthColour = "3"
+        }
+    }
+
+    # Colours are determined, so we can finally kill off the silly precision floats are printed at. Everything is rounded to an integer, so we can just get rid of anything after the full stop
+    %freeSlots = $str.split(".", %freeSlots)[0]
+    %totalSlots = $str.split(".", %totalSlots)[0]
+    %freeQueues = $str.split(".", %freeQueues)[0]
+    %totalQueues = $str.split(".", %totalQueues)[0]
+    %twoMinAvgUploadBandwidth = $str.split(".", %twoMinAvgUploadBandwidth)[0]
+
+    # Returning dynamic XDCC bot stats - $duration courtesy of Common Scripting Services. Colours do not work if you prepend them to the numbers
+    return "Free slots:%slotsColour %freeSlots / %totalSlots | Free queues:%queuesColour %freeQueues / %totalQueues | 2min avg total speed up:%bandwidthColour %twoMinAvgUploadBandwidth / %maxUploadSpeed KB/Sec | Average per user: %avgSpeedPerUser KB/Sec | Updated $duration(%updatedAgo) ago"
+}
+
+# GetDynamicXDCCBotStatsOnChan alias
+# Returns an array of coloured/formatted bot stats lines associated with all registered and available bots idling in the specified channel, in the form <bot nick>$char(1)<stats line>
+# Usage: GetDynamicXDCCBotStatsOnChan <network> <channel>
+alias(GetDynamicXDCCBotStatsOnChan)
+{
+    # Making sure a network has been passed
+    if ($0 == "")
+    {
+        # It hasn't - warning user and exiting
+        warning "XDCC Bot Stats Script - A network must be specified when calling GetDynamicXDCCBotStatsOnChan"
+        return
+    }
+
+    # Setting network
+    %network = $0
+
+    # Making sure a channel has been passed
+    if ($1 == "")
+    {
+        # It hasn't - warning user and exiting
+        warning "XDCC Bot Stats Script - A channel must be specified when calling GetDynamicXDCCBotStatsOnChan. Parameters: '$0-'"
+        return
+    }
+
+    # Setting channel
+    %channel = $1
+
+    # Generating list of bots on channel
+    %xDCCBots = $GetXDCCBotsOnChan(%network, %channel)
+
+    # Initialising statsLines
+    %statsLines = $array()
+
+    # Looping over bots
+    foreach(%xDCCBot, %xDCCBots)
+    {
+        # Generating and storing stats line
+        %statsLines[%statsLines[]#] = "%xDCCBot$char(1)$GetDynamicXDCCBotStats(%network, %xDCCBot)"
+    }
+
+    # Returning array of stats lines
+    return %statsLines
+}
+
+# GetXDCCBotData alias
+# Usage: GetXDCCBotData <network> <XDCC bot> <Data to get, 'updated'/'maxUploadBandwidth'/'password'/'numberOfSlotsInUse'/'totalSlots'/'numberInMainQueue'/'sizeOfMainQueue'/'packSpeedRecord'/'serverMessageQueue'/'dataSentToNetwork120Secs'/'averageBandwidth120Secs'/'recordAverageBandwidth'/'numberPacks'/'offeredPacksSize'/'completedTransfers'/'transfered'>
+alias(GetXDCCBotData)
+{
+    # Making sure a network has been passed
+    if ($0 == "")
+    {
+        # It hasn't - warning user and exiting
+        warning "XDCC Bot Stats Script - A network must be specified when calling GetXDCCBotData"
+        return
+    }
+
+    # Setting network
+    %network = $0
+
+    # Making sure an XDCC bot nick has been passed
+    if ($1 == "")
+    {
+        # It hasn't - warning user and exiting
+        warning "XDCC Bot Stats Script - An XDCC bot nick must be specified when calling GetXDCCBotData. Parameters: '$0-'"
+        return
+    }
+
+    # Setting xDCCBot
+    %xDCCBot = $1
+
+    # Generating xDCCBotIdentifier
+    %xDCCBotIdentifier = "%network %xDCCBot"
+
+    # Making sure data to get has been specified
+    if ($2 == "")
+    {
+        # It hasn't - warning user and exiting
+        warning "XDCC Bot Stats Script - The data to fetch must be specified when calling GetXDCCBotData. Parameters: '$0-'"
+        return
+    }
+
+    # Setting dataToGet
+    %dataToGet = $2
+
+    # Making sure bot exists
+    if ($CanGetBotData(%network, %xDCCBot) == $false)
+    {
+        # It doesn't - warning user and exiting
+        warning "XDCC Bot Stats Script - GetXDCCBotData has been called to fetch '%dataToGet' associated with the bot '%xDCCBot' on '%network', however the bot data is unavailable"
+        return
+    }
+
+    # Dealing with different requested data - basically validating the data fetch request
+    switch -p (%dataToGet)
+    {
+        case ("updated") { }
+        case ("maxUploadBandwidth") { }
+        case ("numberOfSlotsInUse") { }
+        case ("totalSlots") { }
+        case ("numberInMainQueue") { }
+        case ("sizeOfMainQueue") { }
+        case ("packSpeedRecord") { }
+        case ("serverMessageQueue") { }
+        case ("dataSentToNetwork120Secs") { }
+        case ("averageBandwidth120Secs") { }
+        case ("recordAverageBandwidth") { }
+        case ("numberPacks") { }
+        case ("offeredPacksSize") { }
+        case ("completedTransfers") { }
+        case ("transfered")
+        {
+            # Valid data requested - returning - data can be general bot data (tried first) or stats data. Thought this would be too bloated just to enumerate for each fetchable data
+            %data = %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{%dataToGet}
+            if (%data == "") %data = %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{%dataToGet}
+            return %data
+        }
+        default
+        {
+            # Invalid data requested - warning user and exiting
+            warning "XDCC Bot Stats Script - GetXDCCBotData has called to fetch the invalid data '%dataToGet' associated with the bot '%xDCCBot' on '%network' - there is no such data"
+            return
+        }
+    }
+}
+
+# GetXDCCBotsOnChan alias
+# Returns an array of registered and available bots idling in the specified channel
+# Usage: GetXDCCBotsOnChan <network> <channel>
+alias(GetXDCCBotsOnChan)
+{
+    # Making sure a network has been passed
+    if ($0 == "")
+    {
+        # It hasn't - warning user and exiting
+        warning "XDCC Bot Stats Script - A network must be specified when calling GetXDCCBotsOnChan"
+        return
+    }
+
+    # Setting network
+    %network = $0
+
+    # Making sure a channel has been passed
+    if ($1 == "")
+    {
+        # It hasn't - warning user and exiting
+        warning "XDCC Bot Stats Script - A channel must be specified when calling GetXDCCBotsOnChan. Parameters: '$0-'"
+        return
+    }
+
+    # Setting channel
+    %channel = $1
+
+    # Checking if the script is bound to the correct network
+    if ($context.networkName != %network)
+    {
+        # It isn't - obtaining network's IRC context
+        foreach(%context, $context.list)
+        {
+            if ($context.networkName(%context) == %network)
+            {
+                %iRCContext = %context
+                break
+            }
+        }
+
+        # Making sure the network was found
+        if (%iRCContext == "")
+        {
+            # It wasnt - warning user and exiting
+            warning "XDCC Bot Stats Script - GetXDCCBotsOnChan was called, however the specified network ('%network') has not been found. Parameters: '$0-'"
+            return
+        }
+    }
+    else
+    {
+        # It is - setting iRCContext
+        %iRCContext = $context
+    }
+
+    # The desired network exists - obtaining channels's window ID (this is unique across the client session, don't need to bind to the network)
+    %channelWindowID = $channel(%channel, %iRCContext)
+
+    # Making sure the channel was found
+    if (%channelWindowID == 0)
+    {
+        # It wasnt - warning user and exiting
+        warning "XDCC Bot Stats Script - GetXDCCBotsOnChan was called, however the specified channel '%channel' has not been found on %network. Parameters: '$0-'"
+        return
+    }
+
+    # Generating a sorted array of bots on the desired network
+    %xDCCBots[] = $sort($str.grep("%network +.", $keys(%XDCCBotStatsScript_XDCCBots{"index"}), "r"))
+
+    # Returning nothing if there are no relevant bots
+    if (%xDCCBots[]# == 0) return ""
+
+    # Intialising xDCCBotsToReturn
+    %xDCCBotsToReturn[] = $array()
+
+    # Looping over registered bots
+    foreach(%xDCCBotIdentifier, %xDCCBots)
+    {
+        # Extracting bot nick from identifier
+        %xDCCBot = $str.split(" ", %xDCCBotIdentifier)[1]
+
+        # Debug code
+        # echo "\%xDCCBot: %xDCCBot\n\%network: %network\n\%channel: %channel"
+
+        # Skipping bot if it isn't on the channel currently
+        if ($chan.ison(%xDCCBot, %channelWindowID) == 0) continue
+
+        # Skipping bot if data is unavailable
+        if ($CanGetBotData(%network, %xDCCBot) == $false) continue
+
+        # Bot is idling - appending to xDCCBotsToReturn
+        %xDCCBotsToReturn[%xDCCBotsToReturn[]#] = %xDCCBot
+    }
+
+    # Returning array of bots
+    return %xDCCBotsToReturn
+}
+
+# XDCCBotStatsScript alias
+# Usage: XDCCBotStatsScript <command>. <nothing>: Script status. h/help: This usage information. on: Turn script on. off: Turn script off. addbot <Network name> <XDCC bot>: Register bot. deletebot <Network name> <XDCC bot>: Unregister bot. listbots: List all registered XDCC bots. password <Network name> <XDCC bot>: Record DCC admin chat password. upload <Network name> <XDCC bot>: Record maximum upload speed (KB/Sec). xdccstats <channel> <nick>: Generate an XDCC stats response on the appropriate channel. xdccstatstotal <channel> <nick>: Generate an XDCC stats total response on the appropriate channel. statsenablechannel <network> <channel>: Enable XDCC stats triggers on channel. statsdisablechannel <network> <channel>: Disable XDCC stats triggers on channel
+alias(XDCCBotStatsScript)
+{
+    # Variable allocation
+    %usageInstructions = "Usage: XDCCBotStatsScript <command>. <nothing>: Script status. h/help: This usage information. on: Turn script on. off: Turn script off. addbot <Network name> <XDCC bot>: Register bot. deletebot <Network name> <XDCC bot>: Unregister bot. listbots: List all registered XDCC bots. password <Network name> <XDCC bot>: Record DCC admin chat password. upload <Network name> <XDCC bot>: Record maximum upload speed (KB/Sec). xdccstats <channel> <nick>: Generate an XDCC stats response on the appropriate channel. xdccstatstotal <channel> <nick>: Generate an XDCC stats total response on the appropriate channel. statsenablechannel <network> <channel>: Enable XDCC stats triggers on channel. statsdisablechannel <network> <channel>: Disable XDCC stats triggers on channel"
+
+    # Intercepting status request (nothing passed to the alias)
+    if ($0 == "")
+    {
+        echo "XDCC Bot Stats Script is currently %XDCCBotStatsScript_Settings{"Status"}"
+        return
+    }
+
+    # Intercepting help requests
+    if ($0 == "h" || $0 == "help")
+    {
+        echo %usageInstructions
+        return
+    }
+
+    # Intercepting on request
+    if ($0 == "on")
+    {
+        # Making sure script is off
+        if (%XDCCBotStatsScript_Settings{"Status"} != "Off")
+        {
+            # XDCC Bot Stats Script is already on - warning user and exiting
+            warning "XDCC Bot Stats Script is already on"
+            return
+        }
+
+        # Turning script on and saving
+        %XDCCBotStatsScript_Settings{"Status"} = "On"
+        XDCCBotStatsScript::Save
+
+        # Informing user script has been turned on
+        echo "XDCC Bot Stats Script has been turned on"
+        return
+    }
+
+    # Intercepting off request
+    if ($0 == "off")
+    {
+        # Making sure script is on
+        if (%XDCCBotStatsScript_Settings{"Status"} != "On")
+        {
+            # XDCC Bot Stats Script is already off - warning user and exiting
+            warning "XDCCBotStats Script is already off"
+            return
+        }
+
+        # Turning script off and saving
+        %XDCCBotStatsScript_Settings{"Status"} = "Off"
+        XDCCBotStatsScript::Save
+
+        # Informing user script has been turned off
+        echo "XDCC Bot Stats Script has been turned off"
+        return
+    }
+
+    # Intercepting addbot request
+    if ($0 == "addbot")
+    {
+        # Verifying parameters
+        # Making sure a network was specified
+        if ($1 == "")
+        {
+            # No network was specified - informing user and exiting
+            warning "Please specify a network when registering an XDCC bot"
+            return
+        }
+
+        # Setting network
+        %network = $1
+
+        # Making sure a bot was specified
+        if ($2 == "")
+        {
+            # No bot was specified - informing user and exiting
+            warning "Please specify a XDCC bot to register. Parameters: '$0-'"
+            return
+        }
+
+        # Setting xDCCBot
+        %xDCCBot = $2
+
+        # Generating bot identifier
+        %xDCCBotIdentifier = %network" "%xDCCBot
+
+        # Making sure the bot is not already registered
+        if (%XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} != "")
+        {
+            # It is - informing user and exiting
+            warning "The XDCC bot '%xDCCBot' on '%network' is already registered"
+            return
+        }
+
+        # Registering bot and saving
+        %XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} = %xDCCBotIdentifier
+        XDCCBotStatsScript::Save
+
+        # Informing user
+        echo "'%xDCCBot' has been successfully registered on '%network'"
+        return
+    }
+
+    # Intercepting deletebot request
+    if ($0 == "deletebot")
+    {
+        # Verifying parameters
+        # Making sure a network was specified
+        if ($1 == "")
+        {
+            # No network was specified - informing user and exiting
+            warning "Please specify a network when removing an XDCC bot"
+            return
+        }
+
+        # Setting network
+        %network = $1
+
+        # Making sure a bot was specified
+        if ($2 == "")
+        {
+            # No bot was specified - informing user and exiting
+            warning "Please specify a XDCC bot to remove. Parameters: '$0-'"
+            return
+        }
+
+        # Setting xDCCBot
+        %xDCCBot = $2
+
+        # Generating bot identifier
+        %xDCCBotIdentifier = %network" "%xDCCBot
+
+        # Making sure the bot is currently registered
+        if (%XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} == "")
+        {
+            # It isn't - informing user and exiting
+            warning "The XDCC bot '%xDCCBot' on '%network' is not registered"
+            return
+        }
+
+        # Removing bot and saving
+        %XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} = ""
+        %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier} = ""
+        XDCCBotStatsScript::Save
+
+        # Informing user
+        echo "'%xDCCBot' on '%network' has been successfully removed"
+        return
+    }
+
+    # Intercepting listbots request
+    if ($0 == "listbots")
+    {
+        echo "Listing registered XDCC bots..."
+
+        # Checking if there are no bots
+        if (%XDCCBotStatsScript_XDCCBots{"index"} == "")
+        {
+            # There aren't - informing user and exiting
+            echo "No XDCC bots are currently registered"
+            return
+        }
+
+        # Looping for all registered bot records, sorted in network then nick order
+        foreach(%xDCCBotDetails, $sort($keys(%XDCCBotStatsScript_XDCCBots{"index"})))
+        {
+            # Splitting into network and nick
+            %xDCCBotDetails[] = $str.split(" ", %xDCCBotDetails)
+
+            # Informing user
+            echo "Network: $b%xDCCBotDetails[0]$b, Bot: $b%xDCCBotDetails[1]$b"
+        }
+
+        echo "Registered XDCC bots listed"
+        return
+    }
+
+    # Intercepting password request
+    if ($0 == "password")
+    {
+        # Verifying parameters
+        # Making sure a network was specified
+        if ($1 == "")
+        {
+            # No network was specified - informing user and exiting
+            warning "Please specify a network when recording an XDCC bot's DCC admin chat password"
+            return
+        }
+
+        # Setting network
+        %network = $1
+
+        # Making sure a bot was specified
+        if ($2 == "")
+        {
+            # No bot was specified - informing user and exiting
+            warning "Please specify the XDCC bot the DCC admin chat password is associated with. Parameters: '$0-'"
+            return
+        }
+
+        # Setting xDCCBot
+        %xDCCBot = $2
+
+        # Generating bot identifier
+        %xDCCBotIdentifier = %network" "%xDCCBot
+
+        # Making sure the bot is currently registered
+        if (%XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} == "")
+        {
+            # It isn't - informing user and exiting
+            warning "The XDCC bot '"%xDCCBot"' on '"%network"' is not registered"
+            return
+        }
+
+        # Making sure a password was specified
+        if ($3 == "")
+        {
+            # No password was specified - informing user and exiting
+            warning "Please specify the DCC admin chat password to record for the XDCC bot. Parameters: '$0-'"
+            return
+        }
+
+        # Setting password
+        %password = $3
+
+        # Saving password
+        %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"password"} = %password
+        XDCCBotStatsScript::Save
+
+        # Informing user
+        echo "The DCC admin chat password '%password' has been recorded for the XDCC bot '%xDCCBot' on '%network'"
+        return
+    }
+
+    # Intercepting statsdisablebelowhops request
+    if ($0 == "statsdisablebelowhops")
+    {
+        # Verifying parameters
+        # Making sure a network was specified
+        if ($1 == "")
+        {
+            # No network was specified - warning user and exiting
+            warning "Please specify a network when disabling XDCC stats triggers for below hops users on a channel"
+            return
+        }
+
+        # Setting network
+        %network = $1
+
+        # Making sure a channel was specified
+        if ($2 == "")
+        {
+            # No channel was specified - warning user and exiting
+            warning "Please specify a channel to disable XDCC stats triggers for below hops users on. Parameters: '$0-'"
+            return
+        }
+
+        # Setting channel
+        %channel = $2
+
+        # Generating channel identifier
+        %channelIdentifier = "%network %channel"
+
+        # Making sure the channel is currently enabled
+        if (%XDCCBotStatsScript_XDCCStats{"index"}{%channelIdentifier} == "")
+        {
+            # It isn't enabled - warning user and exiting
+            warning "XDCC stats triggers are not enabled for '%channel' on '%network' - please enable before attempting to configure for below hops users"
+            return
+        }
+
+        # Making sure triggers are currently enabled for below hops users
+        if (%XDCCBotStatsScript_XDCCStats{%channelIdentifier}{"ignoreBelowHops"} != "")
+        {
+            # It isn't enabled - warning user and exiting
+            warning "XDCC stats triggers are not enabled for below hops users on '%channel' on '%network'"
+            return
+        }
+
+        # Disabling triggers for below hops users and saving
+        %XDCCBotStatsScript_XDCCStats{%channelIdentifier}{"ignoreBelowHops"} = "ignoreBelowHops"
+        XDCCBotStatsScript::Save
+
+        # Informing user
+        echo "XDCC stats triggers have been disabled for below hops users on %channel"
+        return
+    }
+
+    # Intercepting statsdisablechannel request
+    if ($0 == "statsdisablechannel")
+    {
+        # Verifying parameters
+        # Making sure a network was specified
+        if ($1 == "")
+        {
+            # No network was specified - warning user and exiting
+            warning "Please specify a network when disabling XDCC stats triggers on a channel"
+            return
+        }
+
+        # Setting network
+        %network = $1
+
+        # Making sure a channel was specified
+        if ($2 == "")
+        {
+            # No channel was specified - warning user and exiting
+            warning "Please specify a channel to disable XDCC stats triggers on. Parameters: '$0-'"
+            return
+        }
+
+        # Setting channel
+        %channel = $2
+
+        # Generating channel identifier
+        %channelIdentifier = "%network %channel"
+
+        # Making sure the channel is currently enabled
+        if (%XDCCBotStatsScript_XDCCStats{"index"}{%channelIdentifier} == "")
+        {
+            # It isn't enabled - warning user and exiting
+            warning "XDCC stats triggers are not enabled for '%channel' on '%network'"
+            return
+        }
+
+        # Disabling channel and saving
+        %XDCCBotStatsScript_XDCCStats{"index"}{%channelIdentifier} = ""
+        XDCCBotStatsScript::Save
+
+        # Informing user
+        echo "XDCC stats triggers have been disabled for %channel"
+        return
+    }
+
+    # Intercepting statsenablebelowhops request
+    if ($0 == "statsenablebelowhops")
+    {
+        # Verifying parameters
+        # Making sure a network was specified
+        if ($1 == "")
+        {
+            # No network was specified - warning user and exiting
+            warning "Please specify a network when enabling XDCC stats triggers for below hops users on a channel"
+            return
+        }
+
+        # Setting network
+        %network = $1
+
+        # Making sure a channel was specified
+        if ($2 == "")
+        {
+            # No channel was specified - warning user and exiting
+            warning "Please specify a channel to enable XDCC stats triggers for below hops users on. Parameters: '$0-'"
+            return
+        }
+
+        # Setting channel
+        %channel = $2
+
+        # Generating channel identifier
+        %channelIdentifier = "%network %channel"
+
+        # Making sure the channel is currently enabled
+        if (%XDCCBotStatsScript_XDCCStats{"index"}{%channelIdentifier} == "")
+        {
+            # It isn't enabled - warning user and exiting
+            warning "XDCC stats triggers are not enabled for '%channel' on '%network' - please enable before attempting to configure for below hops users"
+            return
+        }
+
+        # Making sure triggers are currently disabled for below hops users
+        if (%XDCCBotStatsScript_XDCCStats{%channelIdentifier}{"ignoreBelowHops"} == "")
+        {
+            # It isn't disabled - warning user and exiting
+            warning "XDCC stats triggers are not disabled for below hops users on '%channel' on '%network'"
+            return
+        }
+
+        # Enabling triggers for below hops users and saving
+        %XDCCBotStatsScript_XDCCStats{%channelIdentifier}{"ignoreBelowHops"} = ""
+        XDCCBotStatsScript::Save
+
+        # Informing user
+        echo "XDCC stats triggers have been enabled for below hops users on %channel"
+        return
+    }
+
+    # Intercepting statsenablechannel request
+    if ($0 == "statsenablechannel")
+    {
+        # Verifying parameters
+        # Making sure a network was specified
+        if ($1 == "")
+        {
+            # No network was specified - warning user and exiting
+            warning "Please specify a network when enabling XDCC stats triggers on a channel"
+            return
+        }
+
+        # Setting network
+        %network = $1
+
+        # Making sure a channel was specified
+        if ($2 == "")
+        {
+            # No channel was specified - warning user and exiting
+            warning "Please specify a channel to enable XDCC stats triggers on. Parameters: '$0-'"
+            return
+        }
+
+        # Setting channel
+        %channel = $2
+
+        # Generating channel identifier
+        %channelIdentifier = "%network %channel"
+
+        # Making sure the channel isn't already enabled
+        if (%XDCCBotStatsScript_XDCCStats{"index"}{%channelIdentifier} != "")
+        {
+            # Its already enabled - warning user and exiting
+            warning "XDCC stats triggers are already enabled for '%channel' on '%network'"
+            return
+        }
+
+        # Enabling channel and saving
+        %XDCCBotStatsScript_XDCCStats{"index"}{%channelIdentifier} = %channelIdentifier
+        XDCCBotStatsScript::Save
+
+        # Informing user
+        echo "XDCC stats triggers have been enabled for %channel"
+        return
+    }
+
+    # Intercepting upload request
+    if ($0 == "upload")
+    {
+        # Verifying parameters
+        # Making sure a network was specified
+        if ($1 == "")
+        {
+            # No network was specified - informing user and exiting
+            warning "Please specify a network when recording an XDCC bot's max upload speed"
+            return
+        }
+
+        # Setting network
+        %network = $1
+
+        # Making sure a bot was specified
+        if ($2 == "")
+        {
+            # No bot was specified - informing user and exiting
+            warning "Please specify the XDCC bot the max upload speed is associated with. Parameters: '$0-'"
+            return
+        }
+
+        # Setting xDCCBot
+        %xDCCBot = $2
+
+        # Generating bot identifier
+        %xDCCBotIdentifier = %network" "%xDCCBot
+
+        # Making sure the bot is currently registered
+        if (%XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} == "")
+        {
+            # It isn't - informing user and exiting
+            warning "The XDCC bot '%xDCCBot' on '%network' is not registered"
+            return
+        }
+
+        # Making sure upload speed was specified
+        if ($3 == "")
+        {
+            # No max upload speed was specified - informing user and exiting
+            warning "Please specify the max upload speed to record for the XDCC bot. Parameters: '$0-'"
+            return
+        }
+
+        # Setting upload
+        %upload = $3
+
+        # Saving max upload speed
+        %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"maxUploadBandwidth"} = %upload
+        XDCCBotStatsScript::Save
+
+        # Informing user
+        echo "Maximum upload speed %upload""KB/Sec has been set for the XDCC bot '%xDCCBot' on '%network'"
+        return
+    }
+
+    # Intercepting XDCC stats requests
+    if ($0 == "xdccstats" || $0 == "xdccstatstotal")
+    {
+        # Verifying parameters
+        # Making sure a channel was specified
+        if ($1 == "")
+        {
+            # No channel was specified - informing user and exiting
+            warning "Please specify a channel when requesting XDCC stats"
+            return
+        }
+
+        # Setting channel
+        %channel = $1
+
+        # Making sure the triggering user was specified
+        if ($2 == "")
+        {
+            # No user was specified - informing user and exiting
+            warning "Please specify the triggering user when requesting XDCC stats. Parameters: '$0-'"
+            return
+        }
+
+        # Setting nick
+        %nick = $2
+
+        # Generating channel identifier
+        %channelIdentifier = "$context.networkName %channel"
+
+        # Exiting if XDCC stats triggers are not enabled in the channel
+        if (%XDCCBotStatsScript_XDCCStats{"index"}{%channelIdentifier} == "") return
+
+        # Getting at channel window ID
+        %channelWindowID = $channel(%channel)
+
+        # Making sure that this is valid
+        if (%channelWindowID == "")
+        {
+            # It isn't - warning user and exiting
+            warning "XDCC stats ('$0') were requested for '$target' on '$context.networkName', however the channel is unavailable"
+            return
+        }
+
+        # Exiting if the user does not have sufficient rank to trigger the trigger
+        if (%XDCCBotStatsScript_XDCCStats{%channelIdentifier}{"ignoreBelowHops"} != "" && $(!($chan.ishalfop(%nick, %channelWindowID) || $chan.isop(%nick, %channelWindowID) || $chan.isadmin(%nick, %channelWindowID) || $chan.isowner(%nick, %channelWindowID)))) return
+
+        # Debug code
+        # echo "Reached!"
+
+        # Trigger is allowed - generating stats as appropriate
+        # Setting initial response delay and timer counter
+        %delay = 100
+        %i = 1
+
+        # Obtaining array and string of idling bots on the channel
+        %xDCCBots[] = $GetXDCCBotsOnChan($context.networkName, %channel)
+        %xDCCBotsString = $str.replace(%xDCCBots, ",", " ")
+
+        # Generating statsLines and bots string
+        %statsLines = $array()
+
+        # In the case of xdccstats, stats lines for individual bots are needed
+        if ($0 == "xdccstats")
+        {
+            foreach(%xDCCBot, %xDCCBots)
+            {
+                # Note that the colon messes with $b
+                %statsLines[%statsLines[]#] = "$b%xDCCBot$b"": $GetDynamicXDCCBotStats($context.networkName, %xDCCBot)"
+            }
+        }
+
+        # Appending totals line and advert - 'Totals' confuses $b
+        %statsLines[%statsLines[]#] = "$b""Totals:$b $GetDynamicXDCCBotStats($context.networkName, %xDCCBotsString)"
+        %statsLines[%statsLines[]#] = "%XDCCBotStatsScript_Settings{"Name"} v%XDCCBotStatsScript_Settings{"Version"} $b|$b GPL'd for KVIrc $b|$b %XDCCBotStatsScript_Settings{"URL"}"
+
+        # Looping for all stats lines
+        foreach(%statsLine, %statsLines)
+        {
+            # Launching timer
+            timer -s ("XDCCBotStatsScript_%channel_%i_$rand", %delay, %channel, %statsLine)
+            {
+                # Initialising variables
+                %channel = $0
+                %statsLine = $1
+
+                # Spamming channel with stats
+                msg %channel %statsLine
+            }
+
+            # Increasing delay
+            %delay += 1000
+        }
+        return
+    }
+
+    # Warning user of an unrecognised command
+    warning "Command unrecognised ('$0') - use h/help for usage instructions"
+}
+
 # XDCCBotStatsScript::RequestStats alias
 alias(XDCCBotStatsScript::RequestStats)
 {
@@ -154,7 +1244,7 @@ alias(XDCCBotStatsScript::RequestStats)
             # Skipping to next bot if the rebind failed
             if ($context.networkName != %xDCCBotDetails[0])
             {
-                warning "XDCC Bot Stats Script - Attempt to rebind to the '"%xDCCBotDetails[0]"' network in order to issue the CTCP status command to '"%xDCCBotDetails[1]"' failed!"
+                warning "XDCC Bot Stats Script - Attempt to rebind to the '%xDCCBotDetails[0]' network in order to issue the CTCP status command to '%xDCCBotDetails[1]' failed!"
                 continue
             }
         }
@@ -220,6 +1310,9 @@ alias(XDCCBotStatsScript::Startup)
 
     # Initialising hash data
     if (%XDCCBotStatsScript_Settings{"Status"} == "") %XDCCBotStatsScript_Settings{"Status"} = "On"
+    %XDCCBotStatsScript_Settings{"Name"} = "XDCC Bot Stats Script"
+    %XDCCBotStatsScript_Settings{"Version"} = "0.01"
+    %XDCCBotStatsScript_Settings{"URL"} = "https://github.com/OmegaPhil/xdcc-bot-stats-script"
 
     # Intialising timer
     if (%XDCCBotStatsScript_Settings{"Status"} == "On")
@@ -231,6 +1324,209 @@ alias(XDCCBotStatsScript::Startup)
         }
     }
 
+    # Integrating into main toolbar
+    # Creating script popup
+    if ($popup.exists("XDCCBotStatsScript_Main")) popup.destroy "XDCCBotStatsScript_Main"
+    popup.create "XDCCBotStatsScript_Main"
+    popup.addItem("XDCCBotStatsScript_Main", "Turn script on",,, \%XDCCBotStatsScript_Settings{\"Status\"} == \"Off\") XDCCBotStatsScript "On"
+    popup.addItem("XDCCBotStatsScript_Main", "Turn script off",,, \%XDCCBotStatsScript_Settings{\"Status\"} == \"On\") XDCCBotStatsScript "Off"
+    popup.addSeparator "XDCCBotStatsScript_Main"
+    popup.addItem("XDCCBotStatsScript_Main", "List registered XDCC bots") XDCCBotStatsScript "listbots"
+    popup.addItem("XDCCBotStatsScript_Main", "Remove registered XDCC bot...")
+    {
+        # TODO
+        # Showing dialog
+        # %XDCCBotStatsScript_Settings{"GUI"}{"XDCCBotStatsScript_AddNickToHighlightBlacklist"}->$show
+    }
+    popup.delitem -q "Scripts" "XDCCBotStatsScript_Main"
+    popup.addExtPopup "Scripts" "XDCCBotStatsScript_Main" "XDCC Bot Stats Script" "" "XDCCBotStatsScript_Main"
+
+    # Tying main script popup to KVIrc menu (appears after 'Scripting')
+    setmenu -i=2 "Scripts" "Scripts"
+
+    # Integrating into channel popup
+    if ($popup.exists("XDCCBotStatsScript_Channel")) popup.destroy "XDCCBotStatsScript_Channel"
+    popup.create "XDCCBotStatsScript_Channel"
+
+    popup.addItem("XDCCBotStatsScript_Channel", "Enable XDCC stats triggers",,, \%XDCCBotStatsScript_XDCCStats{\"index\"}{\"\$context.networkName \$target\"} == \"\") 
+    {
+        # Enabling XDCC triggers in channel
+        XDCCBotStatsScript "statsenablechannel" $context.networkName $target
+    }
+    popup.addItem("XDCCBotStatsScript_Channel", "Disable XDCC stats triggers",,, \%XDCCBotStatsScript_XDCCStats{\"index\"}{\"\$context.networkName \$target\"} != \"\") 
+    {
+        # Disabling XDCC triggers in channel
+        XDCCBotStatsScript "statsdisablechannel" $context.networkName $target
+    }
+
+    # TODO: Separator
+
+    popup.addItem("XDCCBotStatsScript_Channel", "Enable XDCC stats triggers for users below hops",,, \%XDCCBotStatsScript_XDCCStats{\"index\"}{\"\$context.networkName \$target\"} != \"\" && \%XDCCBotStatsScript_XDCCStats{\"\$context.networkName \$target\"}{\"ignoreBelowHops\"} != \"\") 
+    {
+        # Enabling XDCC triggers for below hops users
+        XDCCBotStatsScript "statsenablebelowhops" $context.networkName $target
+    }
+    popup.addItem("XDCCBotStatsScript_Channel", "Disable XDCC stats triggers for users below hops",,, \%XDCCBotStatsScript_XDCCStats{\"index\"}{\"\$context.networkName \$target\"} != \"\" && \%XDCCBotStatsScript_XDCCStats{\"\$context.networkName \$target\"}{\"ignoreBelowHops\"} == \"\") 
+    {
+        # Disabling XDCC triggers for below hops users
+        XDCCBotStatsScript "statsdisablebelowhops" $context.networkName $target
+    }
+    popup.addItem("XDCCBotStatsScript_Channel", "Trigger !xdccstats in channel",,, \%XDCCBotStatsScript_XDCCStats{\"index\"}{\"\$context.networkName \$target\"} != \"\") 
+    {
+        # Posting fake trigger to channel
+        msg $target "!xdccstats"
+
+        # Causing delayed output
+        timer -s ("XDCCBotStatsScript_TriggerTimer", 500, $target)
+        {
+            XDCCBotStatsScript "xdccstats" $0 $my.nick
+        }
+    }
+    popup.addItem("XDCCBotStatsScript_Channel", "Trigger !xdccstatstotal in channel",,, \%XDCCBotStatsScript_XDCCStats{\"index\"}{\"\$context.networkName \$target\"} != \"\") 
+    {
+        # Posting fake trigger to channel
+        msg $target "!xdccstatstotal"
+
+        # Causing delayed output
+        timer -s ("XDCCBotStatsScript_TriggerTimer", 500, $target)
+        {
+            XDCCBotStatsScript "xdccstatstotal" $0 $my.nick
+        }
+    }
+
+    # Adding XDCC Bot Stats Script menu to channel popup (ensuring that it doesn't exist already)
+    popup.delitem -q "channeltextview" "XDCCBotStatsScript_Channel"
+    popup.addSeparator "channeltextview" "XDCCBotStatsScript_Channel_Separator" "\%XDCCBotStatsScript_Settings{\"Status\"} == \"On\""
+    popup.addExtPopup "channeltextview" "XDCCBotStatsScript_Channel" "XDCC Bot Stats Script" "" "XDCCBotStatsScript_Channel" "\%XDCCBotStatsScript_Settings{\"Status\"} == \"On\""
+
+    # Integrating into nicklist popup
+    # Creating script popup
+    if ($popup.exists("XDCCBotStatsScript_Nicklist")) popup.destroy "XDCCBotStatsScript_Nicklist"
+    popup.create "XDCCBotStatsScript_Nicklist"
+    popup.addItem("XDCCBotStatsScript_Nicklist", "Register \$0",,, \%XDCCBotStatsScript_XDCCBots{\"index\"}{\$context.networkName\" \"\$0} == \"\")
+    {
+        # Registering XDCC bot
+        XDCCBotStatsScript "addbot" $context.networkName $0
+    }
+    popup.addItem("XDCCBotStatsScript_Nicklist", "Unregister \$0",,, \%XDCCBotStatsScript_XDCCBots{\"index\"}{\$context.networkName\" \"\$0} != \"\")
+    {
+        # Unregistering XDCC bot
+        XDCCBotStatsScript "deletebot" $context.networkName $0
+    }
+
+    # TODO: Separator
+
+    popup.addPrologue("XDCCBotStatsScript_Nicklist")
+    {
+        # Generating XDCC bot identifier
+        %xDCCBotIdentifier = $context.networkName" "$0
+
+        # Generating text to display for max upload bandwidth menu item
+        if (%XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} == "" || %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"maxUploadBandwidth"} == "")
+        {
+            %:maxUploadBandwidthText = "Define $0's max upload speed"
+        }
+        else
+        {
+            # Obtaining maxUploadBandwidth
+            %maxUploadBandwidth = %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"maxUploadBandwidth"}
+
+            # Setting text
+            %:maxUploadBandwidthText = "Change $0's max upload speed (%maxUploadBandwidth""KB/Sec)"
+        }
+
+        # Generating text to display for DCC admin chat password menu item
+        if (%XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} == "" || %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"password"} == "")
+        {
+            %:passwordText = "Set $0's DCC admin chat password"
+        }
+        else
+        {
+            # Obtaining password
+            %password = %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"password"}
+
+            # Setting text
+            %:passwordText = "Change $0's DCC admin chat password ("%password")"
+        }
+    }
+    popup.addItem("XDCCBotStatsScript_Nicklist", "\%:maxUploadBandwidthText",,, \%XDCCBotStatsScript_XDCCBots{\"index\"}{\$context.networkName\" \"\$0} != \"\")
+    {
+        # Generating XDCC bot identifier
+        %xDCCBotIdentifier = $context.networkName" "$0
+
+        # Obtaining maxUploadBandwidth
+        %maxUploadBandwidth = %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"maxUploadBandwidth"}
+
+        # Generating dialog text
+        if (%maxUploadBandwidth == "")
+        {
+            %title = "$0's Maximum Upload Speed"
+            %text = "Please enter $0's maximum upload speed (KB/Sec):"
+        }
+        else
+        {
+            %title = "Change $0's Maximum Upload Speed"
+            %text = "Please enter $0's new maximum upload speed (KB/Sec):"
+        }
+
+        # Prompting user for maximum upload speed
+        dialog.textinput -d=%maxUploadBandwidth -i=$icon(serverinfo) (%title, %text, "OK", "escape=Cancel",, $0)
+        {
+            # Debug code
+            # echo "Dialog return value: "$0
+
+            # Exiting if user cancelled
+            if ($0 == 1) return
+
+            # Setting maxUploadBandwidth
+            %maxUploadBandwidth = $1
+
+            # Setting max upload speed
+            XDCCBotStatsScript "upload" $context.networkName $2 %maxUploadBandwidth
+        }
+    }
+    popup.addItem("XDCCBotStatsScript_Nicklist", "\%:passwordText",,, \%XDCCBotStatsScript_XDCCBots{\"index\"}{\$context.networkName\" \"\$0} != \"\")
+    {
+        # Generating XDCC bot identifier
+        %xDCCBotIdentifier = $context.networkName" "$0
+
+        # Obtaining DCC admin chat password
+        %password = %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"password"}
+
+        # Generating dialog text
+        if (%password == "")
+        {
+            %title = "$0's DCC Admin Chat Password"
+            %text = "Please enter $0's DCC admin chat password:"
+        }
+        else
+        {
+            %title = "Change $0's DCC Admin Chat Password"
+            %text = "Please enter $0's new DCC admin chat password:"
+        }
+
+        # Prompting user for DCC admin chat password
+        dialog.textinput -d=%password -i=$icon(serverinfo) (%title, %text, "OK", "escape=Cancel",, $0)
+        {
+            # Debug code
+            # echo "Dialog return value: "$0
+
+            # Exiting if user cancelled
+            if ($0 == 1) return
+
+            # Setting password
+            %password = $1
+
+            # Setting DCC admin chat password
+            XDCCBotStatsScript "password" $context.networkName $2 %password
+        }
+    }
+
+    # Adding XDCC Bot Stats Script menu to nicklist popup (ensuring that it doesn't exist already)
+    popup.delitem -q "channel" "XDCCBotStatsScript_Nicklist"
+    popup.addSeparator "channel" "XDCCBotStatsScript_Nicklist_Separator" %XDCCBotStatsScript_Settings{"Status"} == "On"
+    popup.addExtPopup "channel" "XDCCBotStatsScript_Nicklist" "XDCC Bot Stats Script" "" "XDCCBotStatsScript_Nicklist" %XDCCBotStatsScript_Settings{"Status"} == "On"
+
     # Carrying out first stats request
     XDCCBotStatsScript::RequestStats
 }
@@ -239,13 +1535,23 @@ alias(XDCCBotStatsScript::Startup)
 alias(XDCCBotStatsScript::uninstall::uninstall)
 {
     # All events and aliases should be uninstalled here
+    alias(CanGetBotData) {}
+    alias(GetDynamicXDCCBotStats) {}
+    alias(GetDynamicXDCCBotStatsOnChan) {}
+    alias(GetXDCCBotData) {}
+    alias(GetXDCCBotsOnChan) {}
+    alias(XDCCBotStatsScript) {}
     alias(XDCCBotStatsScript::RequestStats) {}
     alias(XDCCBotStatsScript::Save) {}
     alias(XDCCBotStatsScript::Startup) {}
     alias(XDCCBotStatsScript::uninstall::uninstall) {}
+    event(OnChannelMessage,XDCCBotStatsScript) {}
     event(OnCTCPReply,XDCCBotStatsScript) {}
     event(OnKVIrcStartup,XDCCBotStatsScript) {}
+    event(OnTextInput,XDCCBotStatsScript) {}
     event(401,XDCCBotStatsScript) {}
+
+    # TODO: Kill off all timers
 
     # Clearing global variables
     %XDCCBotStatsScript_XDCCBots = ""
