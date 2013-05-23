@@ -297,6 +297,9 @@ alias(GetDynamicXDCCBotStats)
         # echo "\%updatedAgo: %updatedAgo"
     }
 
+    # Detecting no valid bots and exiting
+    if (%totalSlots == 0) return
+
     # Calculating free slots/queues
     %freeSlots = $(%totalSlots - %slotsInUse)
     if (%freeSlots < 0) %freeSlots = 0
