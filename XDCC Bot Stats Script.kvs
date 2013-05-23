@@ -1161,8 +1161,8 @@ alias(XDCCBotStatsScript)
             return
         }
 
-        # Exiting if the user does not have sufficient rank to trigger the trigger
-        if (%XDCCBotStatsScript_XDCCStats{%channelIdentifier}{"ignoreBelowHops"} != "" && $(!($chan.ishalfop(%nick, %channelWindowID) || $chan.isop(%nick, %channelWindowID) || $chan.isadmin(%nick, %channelWindowID) || $chan.isowner(%nick, %channelWindowID)))) return
+        # Exiting if the user is not me (kept working for testing purposes) and does not have sufficient rank to trigger the trigger
+        if (%XDCCBotStatsScript_XDCCStats{%channelIdentifier}{"ignoreBelowHops"} != "" && %nick != $my.nick && $(!($chan.ishalfop(%nick, %channelWindowID) || $chan.isop(%nick, %channelWindowID) || $chan.isadmin(%nick, %channelWindowID) || $chan.isowner(%nick, %channelWindowID)))) return
 
         # Debug code
         # echo "Reached!"
