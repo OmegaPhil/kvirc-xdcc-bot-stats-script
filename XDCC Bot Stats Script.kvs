@@ -38,14 +38,14 @@ event(OnChannelMessage,XDCCBotStatsScript)
     if (%XDCCBotStatsScript_Settings{"Status"} == "Off") return
 
     # Detecting XDCC stats triggers and routing to the main alias
-    if ($str.left($3, 15) == "!xdccstatstotal")
-    {
-        XDCCBotStatsScript "xdccstatstotal" $target $0
-        return
-    }
-    if ($str.left($3, 10) == "!xdccstats")
+    if ($3 == "!xdccstats")
     {
         XDCCBotStatsScript "xdccstats" $target $0
+        return
+    }
+    if ($3 == "!xdccstatstotal")
+    {
+        XDCCBotStatsScript "xdccstatstotal" $target $0
         return
     }
 }
