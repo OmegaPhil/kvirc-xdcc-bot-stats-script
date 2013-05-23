@@ -4,7 +4,7 @@
 # Version: 0.01 - remember to update this in the main hash
 # TODO: Basic DCC admin chat work - ability to open and respond to password prompt
 # TODO: Logical pass
-# TODO: Basic documentation on how to use the script. Announce on the KVIrc mailing list after this?
+# TODO: Basic documentation on how to use the script (need to add somehitng to Common Scripting Services repo too). Announce on the KVIrc mailing list after this?
 
 /*
 Copyright (C) 2013 OmegaPhil (OmegaPhil+KVIrc@gmail.com)
