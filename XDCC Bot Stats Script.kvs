@@ -158,6 +158,9 @@ event(401,XDCCBotStatsScript)
     # Exiting if the nick isn't a registered XDCC bot
     if (%XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} == "") return
 
+    # Debug code
+    # echo "Unable to CTCP XDCC bot $3 - not idling on the server"
+
     # A registered XDCC bot had its stats requested, but it wasnt on the server
     # Updating request delay (with a maximum of 10 minutes) and setting the next acceptable request time
     if (%XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"requestDelay"} == "")
@@ -168,7 +171,10 @@ event(401,XDCCBotStatsScript)
     {
         if (%XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"requestDelay"} < 10) %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"requestDelay"}++
     }
-    %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"nextStatsRequest"} = $unixtime + (60 * %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"requestDelay"})
+    %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"nextStatsRequest"} = $($unixtime + (60 * %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"requestDelay"}))
+
+    # Quashing this event as it is in response to this script's query
+    halt
 }
 
 
@@ -1231,26 +1237,26 @@ alias(XDCCBotStatsScript::RequestStats)
     }
 
     # Looping for all registered bot records, sorted in network order to reduce rebinding
-    foreach(%xDCCBotDetails, $sort($keys(%XDCCBotStatsScript_XDCCBots{"index"})))
+    foreach(%xDCCBotIdentifier, $sort($keys(%XDCCBotStatsScript_XDCCBots{"index"})))
     {
         # Splitting into network and nick
-        %xDCCBotDetails[] = $str.split(" ", %xDCCBotDetails)
+        %xDCCBotDetails[] = $str.split(" ", %xDCCBotIdentifier)
 
         # Debug code
-        # echo "Found bot, network: "%xDCCBotDetails[0]", bot: "%xDCCBotDetails[1]
+        # echo "Stats request check: Found bot, network: %xDCCBotDetails[0], bot: %xDCCBotDetails[1], next stats request: '%XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"nextStatsRequest"}'"
 
         # Moving to the next bot if the network isn't currently available
         if (%networks{%xDCCBotDetails[0]} == "") continue
 
         # Checking if this bot was previously found to not be present on the server
-        if (%XDCCBotStatsScript_XDCCBots{%xDCCBotDetails}{"nextStatsRequest"} != "")
+        if (%XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"nextStatsRequest"} != "")
         {
             # It was - skipping if the next request delay has not been reached
-            if ($unixtime < %XDCCBotStatsScript_XDCCBots{%xDCCBotDetails}{"nextStatsRequest"}) continue
+            if ($unixtime < %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"nextStatsRequest"}) continue
 
             # Can now request stats, cleaning up
-            %XDCCBotStatsScript_XDCCBots{%xDCCBotDetails}{"nextStatsRequest"} = ""
-            %XDCCBotStatsScript_XDCCBots{%xDCCBotDetails}{"requestDelay"} = ""
+            %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"nextStatsRequest"} = ""
+            %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"requestDelay"} = ""
         }
 
         # Checking if we are bound to the correct network
