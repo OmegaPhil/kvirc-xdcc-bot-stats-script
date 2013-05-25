@@ -1,2 +1,7 @@
+v0.1 (25.05.13):
+GetDynamicXDCCBotStats: Deal with 0 valid bots.
+XDCCBotStatsScript: Allow user running this script to skip rank check for XDCC triggers in the channel (previously you needed to be hop+ if set in the channel).
+Working status querying delays when bots arent on the server: Previously when a bot wasn't on the server, the code responsible for delaying the next request didnt work, so the non-existant bots would be permanently spammed every 30 seconds.
+
 v0.01 (22.05.13):
 Initial public release - Script is now capable of gathering stats from registered bots, processing and making available the data in normal channel and other triggers.

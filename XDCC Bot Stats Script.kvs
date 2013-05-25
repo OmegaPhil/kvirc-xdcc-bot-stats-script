@@ -1,7 +1,7 @@
 # XDCC Bot Stats Script
 # =====================
 
-# Version: 0.01 - remember to update this in the main hash
+# Version: 0.1 - remember to update this in the main hash
 # TODO: Basic DCC admin chat work - ability to open and respond to password prompt
 # TODO: Logical pass
 # TODO: Basic documentation on how to use the script (need to add somehitng to Common Scripting Services repo too). Announce on the KVIrc mailing list after this?
@@ -1336,7 +1336,7 @@ alias(XDCCBotStatsScript::Startup)
     # Initialising hash data
     if (%XDCCBotStatsScript_Settings{"Status"} == "") %XDCCBotStatsScript_Settings{"Status"} = "On"
     %XDCCBotStatsScript_Settings{"Name"} = "XDCC Bot Stats Script"
-    %XDCCBotStatsScript_Settings{"Version"} = "0.01"
+    %XDCCBotStatsScript_Settings{"Version"} = "0.1"
     %XDCCBotStatsScript_Settings{"URL"} = "https://github.com/OmegaPhil/kvirc-xdcc-bot-stats-script"
 
     # Intialising timer
