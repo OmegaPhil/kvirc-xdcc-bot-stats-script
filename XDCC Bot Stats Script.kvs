@@ -691,6 +691,11 @@ alias(XDCCBotStatsScript)
     }
 
     # Intercepting addbot request
+    # Return codes:
+    # 0: Success
+    # 1: Network wasn't specified
+    # 2: XDCC bot wasn't specified
+    # 3: XDCC bot is already registered on network
     if ($0 == "addbot")
     {
         # Verifying parameters
@@ -699,7 +704,7 @@ alias(XDCCBotStatsScript)
         {
             # No network was specified - informing user and exiting
             warning "Please specify a network when registering an XDCC bot"
-            return
+            return 1
         }
 
         # Setting network
@@ -710,7 +715,7 @@ alias(XDCCBotStatsScript)
         {
             # No bot was specified - informing user and exiting
             warning "Please specify a XDCC bot to register. Parameters: '$0-'"
-            return
+            return 2
         }
 
         # Setting xDCCBot
@@ -724,7 +729,7 @@ alias(XDCCBotStatsScript)
         {
             # It is - informing user and exiting
             warning "The XDCC bot '%xDCCBot' on '%network' is already registered"
-            return
+            return 3
         }
 
         # Registering bot and saving
@@ -733,10 +738,15 @@ alias(XDCCBotStatsScript)
 
         # Informing user
         echo "'%xDCCBot' has been successfully registered on '%network'"
-        return
+        return 0
     }
 
     # Intercepting deletebot request
+    # Return codes:
+    # 0: Success
+    # 1: Network wasn't specified
+    # 2: XDCC bot wasn't specified
+    # 3: XDCC bot isn't registered on network
     if ($0 == "deletebot")
     {
         # Verifying parameters
@@ -745,7 +755,7 @@ alias(XDCCBotStatsScript)
         {
             # No network was specified - informing user and exiting
             warning "Please specify a network when removing an XDCC bot"
-            return
+            return 1
         }
 
         # Setting network
@@ -756,7 +766,7 @@ alias(XDCCBotStatsScript)
         {
             # No bot was specified - informing user and exiting
             warning "Please specify a XDCC bot to remove. Parameters: '$0-'"
-            return
+            return 2
         }
 
         # Setting xDCCBot
@@ -770,7 +780,7 @@ alias(XDCCBotStatsScript)
         {
             # It isn't - informing user and exiting
             warning "The XDCC bot '%xDCCBot' on '%network' is not registered"
-            return
+            return 3
         }
 
         # Removing bot and saving
@@ -780,7 +790,7 @@ alias(XDCCBotStatsScript)
 
         # Informing user
         echo "'%xDCCBot' on '%network' has been successfully removed"
-        return
+        return 0
     }
 
     # Intercepting listbots request
@@ -1349,6 +1359,138 @@ alias(XDCCBotStatsScript::Startup)
         }
     }
 
+    # Creating dialogs
+    # Remove Registered XDCC Bot dialog
+    %dialog = $new(dialog,, "XDCCBotStatsScript_RemoveRegisteredXDCCBot")
+    %dialog->$setWindowTitle("Remove Registered XDCC Bot")
+
+    %vbox = $new(vbox, %dialog, "VBox")
+    %layout = $new(layout, %dialog)
+    %layout->$addRowSpacing(0, 30)
+    %layout->$addWidget(%vbox, 0, 0)
+
+    %label_network = $new(label, %vbox)
+    %label_network->$setText("Network:")
+    %listbox_network = $new(listbox, %vbox, "Network")
+    %dialog->%listbox_network = %listbox_network
+
+    %label_bot = $new(label, %vbox)
+    %label_bot->$setText("XDCC Bot:")
+    %listbox_bot = $new(listbox, %vbox, "XDCC Bot")
+    %dialog->%listbox_bot = %listbox_bot
+
+    %hbox = $new(hbox, %dialog)
+    %layout->$addWidget(%hbox, 1, 0)
+
+    %button_OK = $new(button, %hbox)
+    %button_OK->$setText("OK")
+
+    %button_Cancel = $new(button, %hbox)
+    %button_Cancel->$setText("Cancel")
+
+    # Event overrides
+    privateimpl(%dialog, "showevent")
+    {
+        # Clearing listbox_network
+        $$->%listbox_network->$clear
+
+        # Looping for all bot identifiers
+        foreach(%xDCCBotIdentifier, $keys(%XDCCBotStatsScript_XDCCBots{"index"}))
+        {
+            # Obtaining the bot network
+            %network = $str.split(" ", %xDCCBotIdentifier)[0]
+
+            # Collecting networks in temporary hash to avoid dupes - the list class does not actually have a search method!
+            if (%networks{%network} == "") %networks{%network} = %network
+        }
+
+        # Sorting and adding the networks to listbox_network
+        foreach(%network, $sort($keys(%networks))) $$->%listbox_network->$insertitem(%network)
+
+        # Clearing listbox_bot
+        $$->%listbox_bot->$clear
+
+        # Focussing listbox_network
+        $$->%listbox_network->$setFocus
+    }
+
+    privateimpl(%listbox_network, "currentItemChangedEvent")
+    {
+        # A network has been selected - obtaining network
+        %network = $$->$currentText
+
+        # Making sure network is available (the first event firing is before this)
+        if (%network != "")
+        {
+            # Obtaining dialog object ID
+            %dialog = %XDCCBotStatsScript_Settings{"GUI"}{"XDCCBotStatsScript_RemoveRegisteredXDCCBot"}
+
+            # Clearing XDCC Bot listbox
+            %dialog->%listbox_bot->$clear
+
+            # Looping for all sorted bot identifiers
+            foreach(%xDCCBotIdentifier, $sort($keys(%XDCCBotStatsScript_XDCCBots{"index"})))
+            {
+                # Obtaining bot details
+                %xDCCBotDetails = $str.split(" ", %xDCCBotIdentifier)
+
+                # Adding to list if bot is associated with the right network
+                if (%xDCCBotDetails[0] == %network) %dialog->%listbox_bot->$insertitem(%xDCCBotDetails[1])
+            }
+        }
+    }
+
+    privateimpl(%dialog, "OK")
+    {
+        # Obtaining information
+        %network = $$->%listbox_network->$currentText
+        %xDCCBot = $$->%listbox_bot->$currentText
+
+        # Unregistering XDCC Bot
+        %return = $XDCCBotStatsScript("deletebot", %network, %xDCCBot)
+
+        # Dealing with results
+        switch (%return)
+        {
+            case(0)
+            {
+                # Success
+                dialog.message -i=$icon("serverinfo") ("Remove Registered XDCC Bot", "Unregistered '%xDCCBot' on '%network'", "escape=Cancel") { }
+                $$->$hide
+            }
+
+            case(1)
+            {
+                # Network wasn't specified
+                dialog.message -i=$icon("socketwarning") ("Remove Registered XDCC Bot", "Please specify a network to unregister an XDCC bot from", "escape=Cancel") { }
+            }
+
+            case(2)
+            {
+                # XDCC bot wasn't specified
+                dialog.message -i=$icon("socketwarning") ("Remove Registered XDCC Bot", "Please specify an XDCC bot to unregister on '%network'", "escape=Cancel") { }
+            }
+
+            case(3)
+            {
+                # XDCC bot isn't registered on network
+                dialog.message -i=$icon("socketwarning") ("Remove Registered XDCC Bot", "'%xDCCBot' is not registered on '%network'", "escape=Cancel") { }
+            }
+        }
+    }
+
+    privateimpl(%dialog, "Cancel")
+    {
+        # Hiding dialog
+        $$->$hide
+    }
+
+    objects.connect %button_OK clicked %dialog OK
+    objects.connect %button_Cancel clicked %dialog Cancel
+    
+    # Saving dialog object ID
+    %XDCCBotStatsScript_Settings{"GUI"}{"XDCCBotStatsScript_RemoveRegisteredXDCCBot"} = %dialog
+
     # Integrating into main toolbar
     # Creating script popup
     if ($popup.exists("XDCCBotStatsScript_Main")) popup.destroy "XDCCBotStatsScript_Main"
@@ -1359,9 +1501,8 @@ alias(XDCCBotStatsScript::Startup)
     popup.addItem("XDCCBotStatsScript_Main", "List registered XDCC bots") XDCCBotStatsScript "listbots"
     popup.addItem("XDCCBotStatsScript_Main", "Remove registered XDCC bot...")
     {
-        # TODO
         # Showing dialog
-        # %XDCCBotStatsScript_Settings{"GUI"}{"XDCCBotStatsScript_AddNickToHighlightBlacklist"}->$show
+        %XDCCBotStatsScript_Settings{"GUI"}{"XDCCBotStatsScript_RemoveRegisteredXDCCBot"}->$show
     }
     popup.delitem -q "Scripts" "XDCCBotStatsScript_Main"
     popup.addExtPopup "Scripts" "XDCCBotStatsScript_Main" "XDCC Bot Stats Script" "" "XDCCBotStatsScript_Main"
