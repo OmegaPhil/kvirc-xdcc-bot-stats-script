@@ -1524,9 +1524,7 @@ alias(XDCCBotStatsScript::Startup)
         # Disabling XDCC triggers in channel
         XDCCBotStatsScript "statsdisablechannel" $context.networkName $target
     }
-
-    # TODO: Separator
-
+    popup.addSeparator "XDCCBotStatsScript_Channel"
     popup.addItem("XDCCBotStatsScript_Channel", "Enable XDCC stats triggers for users below hops",,, \%XDCCBotStatsScript_XDCCStats{\"index\"}{\"\$context.networkName \$target\"} != \"\" && \%XDCCBotStatsScript_XDCCStats{\"\$context.networkName \$target\"}{\"ignoreBelowHops\"} != \"\") 
     {
         # Enabling XDCC triggers for below hops users
@@ -1579,9 +1577,7 @@ alias(XDCCBotStatsScript::Startup)
         # Unregistering XDCC bot
         XDCCBotStatsScript "deletebot" $context.networkName $0
     }
-
-    # TODO: Separator
-
+    popup.addSeparator "XDCCBotStatsScript_Nicklist"
     popup.addPrologue("XDCCBotStatsScript_Nicklist")
     {
         # Generating XDCC bot identifier
