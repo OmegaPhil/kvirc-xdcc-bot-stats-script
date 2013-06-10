@@ -1713,7 +1713,8 @@ alias(XDCCBotStatsScript::uninstall::uninstall)
     event(OnTextInput,XDCCBotStatsScript) {}
     event(401,XDCCBotStatsScript) {}
 
-    # TODO: Kill off all timers
+    # Killing persistent timers
+    killtimer "XDCCBotStatsScript_StatsTimer"
 
     # Clearing global variables
     %XDCCBotStatsScript_XDCCBots = ""
