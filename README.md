@@ -80,7 +80,7 @@ All triggers can be generated from the GUI, or entered manually as usual.
 Including Stats In A Normal !xdcc Trigger
 =========================================
 
-The following is example !xdcc code, from an OnChannelMessage event handler that is not part of the XDCC Bot Stats Script (functionality this script provides intended to be integrated into your normal channel scripts):
+The following is example !xdcc code, from an OnChannelMessage event handler that is not part of the XDCC Bot Stats Script (functionality this script provides is intended to be integrated into your normal channel scripts):
 
     if ($3 == "!xdcc")
     {
