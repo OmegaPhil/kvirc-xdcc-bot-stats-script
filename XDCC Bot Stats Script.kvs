@@ -826,7 +826,7 @@ alias(XDCCBotStatsScript)
         XDCCBotStatsScript::Save
 
         # Informing user
-        echo "'%xDCCBot' has been successfully registered on '%network'"
+        echo "XDCC Bot Stats Script - '%xDCCBot' has been successfully registered on '%network'"
         return 0
     }
 
@@ -851,7 +851,7 @@ alias(XDCCBotStatsScript)
                 XDCCBotStatsScript::Save
 
                 # Informing user automatic authentication has been turned on
-                echo "DCC admin chats with registered XDCC bots will now automatically authenticate if a password has been set"
+                echo "XDCC Bot Stats Script - DCC admin chats with registered XDCC bots will now automatically authenticate if a password has been set"
                 return
             }
             case ("off")
@@ -869,7 +869,7 @@ alias(XDCCBotStatsScript)
                 XDCCBotStatsScript::Save
 
                 # Informing user automatic authentication has been turned off
-                echo "DCC admin chats will no longer be automatically authenticated"
+                echo "XDCC Bot Stats Script - DCC admin chats will no longer be automatically authenticated"
                 return
             }
             default
@@ -902,7 +902,7 @@ alias(XDCCBotStatsScript)
                 XDCCBotStatsScript::Save
 
                 # Informing user ident'd only authentication has been turned on
-                echo "DCC admin chats with registered XDCC bots will now only automatically authenticate if the bot is identified on the network"
+                echo "XDCC Bot Stats Script - DCC admin chats with registered XDCC bots will now only automatically authenticate if the bot is identified on the network"
                 return
             }
             case ("off")
@@ -920,7 +920,7 @@ alias(XDCCBotStatsScript)
                 XDCCBotStatsScript::Save
 
                 # Informing user ident'd only authentication has been turned off
-                echo "DCC admin chats with registered XDCC bots will now always automatically authenticate - WARNING - THIS IS INSECURE!"
+                echo "XDCC Bot Stats Script - DCC admin chats with registered XDCC bots will now always automatically authenticate - WARNING - THIS IS INSECURE!"
                 return
             }
             default
@@ -953,7 +953,7 @@ alias(XDCCBotStatsScript)
                 XDCCBotStatsScript::Save
 
                 # Informing user quietening has been turned on
-                echo "DCC admin chats with registered XDCC bots will now run in quiet mode - no highlights or notifications will result from their messages"
+                echo "XDCC Bot Stats Script - DCC admin chats with registered XDCC bots will now run in quiet mode - no highlights or notifications will result from their messages"
                 return
             }
             case ("off")
@@ -971,7 +971,7 @@ alias(XDCCBotStatsScript)
                 XDCCBotStatsScript::Save
 
                 # Informing user quietening has been turned off
-                echo "DCC admin chats with registered XDCC bots will no longer run in quiet mode"
+                echo "XDCC Bot Stats Script - DCC admin chats with registered XDCC bots will no longer run in quiet mode"
                 return
             }
             default
@@ -1031,7 +1031,7 @@ alias(XDCCBotStatsScript)
         XDCCBotStatsScript::Save
 
         # Informing user
-        echo "'%xDCCBot' on '%network' has been successfully removed"
+        echo "XDCC Bot Stats Script - '%xDCCBot' on '%network' has been successfully removed"
         return 0
     }
 
@@ -1115,7 +1115,7 @@ alias(XDCCBotStatsScript)
         XDCCBotStatsScript::Save
 
         # Informing user
-        echo "The DCC admin chat password '%password' has been recorded for the XDCC bot '%xDCCBot' on '%network'"
+        echo "XDCC Bot Stats Script - The DCC admin chat password '%password' has been recorded for the XDCC bot '%xDCCBot' on '%network'"
         return
     }
 
@@ -1169,7 +1169,7 @@ alias(XDCCBotStatsScript)
         XDCCBotStatsScript::Save
 
         # Informing user
-        echo "XDCC stats triggers have been disabled for below hops users on %channel"
+        echo "XDCC Bot Stats Script - XDCC stats triggers have been disabled for below hops users on %channel"
         return
     }
 
@@ -1215,7 +1215,7 @@ alias(XDCCBotStatsScript)
         XDCCBotStatsScript::Save
 
         # Informing user
-        echo "XDCC stats triggers have been disabled for %channel"
+        echo "XDCC Bot Stats Script - XDCC stats triggers have been disabled for %channel"
         return
     }
 
@@ -1269,7 +1269,7 @@ alias(XDCCBotStatsScript)
         XDCCBotStatsScript::Save
 
         # Informing user
-        echo "XDCC stats triggers have been enabled for below hops users on %channel"
+        echo "XDCC Bot Stats Script - XDCC stats triggers have been enabled for below hops users on %channel"
         return
     }
 
@@ -1315,7 +1315,7 @@ alias(XDCCBotStatsScript)
         XDCCBotStatsScript::Save
 
         # Informing user
-        echo "XDCC stats triggers have been enabled for %channel"
+        echo "XDCC Bot Stats Script - XDCC stats triggers have been enabled for %channel"
         return
     }
 
@@ -1372,7 +1372,7 @@ alias(XDCCBotStatsScript)
         XDCCBotStatsScript::Save
 
         # Informing user
-        echo "Maximum upload speed %upload""KB/Sec has been set for the XDCC bot '%xDCCBot' on '%network'"
+        echo "XDCC Bot Stats Script - Maximum upload speed %upload""KB/Sec has been set for the XDCC bot '%xDCCBot' on '%network'"
         return
     }
 
