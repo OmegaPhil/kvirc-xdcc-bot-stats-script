@@ -1,9 +1,9 @@
 <map version="0.9.0">
 <!--To view this file, download free mind mapping software Freeplane from http://freeplane.sourceforge.net -->
 <node TEXT="XDCC Bot Stats Script" ID="ID_626258206" CREATED="1368970935263" MODIFIED="1368971081235" COLOR="#000000">
+<font SIZE="20"/>
 <hook NAME="MapStyle" max_node_width="600"/>
 <hook NAME="accessories/plugins/AutomaticLayout.properties"/>
-<font SIZE="20"/>
 <node TEXT="ctcp &lt;bot&gt; status" POSITION="right" ID="ID_720389776" CREATED="1368966489859" MODIFIED="1368971097376" COLOR="#0033ff">
 <font SIZE="18"/>
 <edge STYLE="sharp_bezier" WIDTH="8"/>
@@ -11,7 +11,7 @@
 <font SIZE="16"/>
 <edge STYLE="bezier" WIDTH="thin"/>
 </node>
-<node TEXT="See &apos;status&apos; command notes in official iroffer documentation" ID="ID_1774655036" CREATED="1368966894596" MODIFIED="1368971097416" COLOR="#00b439" LINK="http://iroffer.org/docs/admin.html">
+<node TEXT="See &apos;status&apos; command notes in official iroffer documentation" ID="ID_1774655036" CREATED="1368966894596" MODIFIED="1371302740194" COLOR="#00b439" LINK="http://iroffer.org/docs/admin.html#status">
 <font SIZE="16"/>
 <edge STYLE="bezier" WIDTH="thin"/>
 </node>
@@ -41,22 +41,22 @@
 <font SIZE="14"/>
 </node>
 </node>
-<node TEXT="Have asked dinoex if its possible to extend the status line to include the idle queue (19.05.13 in #dinoex)" ID="ID_154820761" CREATED="1368971359258" MODIFIED="1368971384484" COLOR="#00b439">
+<node TEXT="Have asked dinoex if its possible to extend the status line to include the idle queue (19.05.13 in #dinoex). This was ignored, so I have now created a feature request (15.06.13, linked)" ID="ID_154820761" CREATED="1368971359258" MODIFIED="1371303205254" COLOR="#00b439" LINK="http://iroffer.dinoex.de/issues/171">
 <font SIZE="16"/>
 <edge STYLE="bezier" WIDTH="thin"/>
 </node>
 </node>
-<node TEXT="GUI" POSITION="left" ID="ID_1987771094" CREATED="1368993595534" MODIFIED="1368993598105" COLOR="#0033ff">
+<node TEXT="GUI" FOLDED="true" POSITION="left" ID="ID_1987771094" CREATED="1368993595534" MODIFIED="1368993598105" COLOR="#0033ff">
 <font SIZE="18"/>
 <edge STYLE="sharp_bezier" WIDTH="8"/>
-<node TEXT="Bot registration" ID="ID_713689099" CREATED="1368993599187" MODIFIED="1368993609280" COLOR="#00b439">
+<node TEXT="Bot registration" FOLDED="true" ID="ID_713689099" CREATED="1368993599187" MODIFIED="1368993609280" COLOR="#00b439">
 <font SIZE="16"/>
 <edge STYLE="bezier" WIDTH="thin"/>
 <node TEXT="Nicklist popup" ID="ID_1345416449" CREATED="1368993625932" MODIFIED="1368993631831" COLOR="#990000">
 <font SIZE="14"/>
 </node>
 </node>
-<node TEXT="Bot removal" ID="ID_1857732131" CREATED="1368993609651" MODIFIED="1368993616828" COLOR="#00b439">
+<node TEXT="Bot removal" FOLDED="true" ID="ID_1857732131" CREATED="1368993609651" MODIFIED="1368993616828" COLOR="#00b439">
 <font SIZE="16"/>
 <edge STYLE="bezier" WIDTH="thin"/>
 <node TEXT="Nicklist popup" ID="ID_1644028046" CREATED="1368993633604" MODIFIED="1368993638791" COLOR="#990000">
@@ -66,14 +66,14 @@
 <font SIZE="14"/>
 </node>
 </node>
-<node TEXT="Bots listing" ID="ID_1054619688" CREATED="1368993618445" MODIFIED="1368993621024" COLOR="#00b439">
+<node TEXT="Bots listing" FOLDED="true" ID="ID_1054619688" CREATED="1368993618445" MODIFIED="1368993621024" COLOR="#00b439">
 <font SIZE="16"/>
 <edge STYLE="bezier" WIDTH="thin"/>
 <node TEXT="Standard echo to the current window" ID="ID_1473554229" CREATED="1368993653897" MODIFIED="1368993663438" COLOR="#990000">
 <font SIZE="14"/>
 </node>
 </node>
-<node TEXT="XDCC stats enabling/settings editing" ID="ID_1634486866" CREATED="1368993728135" MODIFIED="1368993740706" COLOR="#00b439">
+<node TEXT="XDCC stats enabling/settings editing" FOLDED="true" ID="ID_1634486866" CREATED="1368993728135" MODIFIED="1368993740706" COLOR="#00b439">
 <font SIZE="16"/>
 <edge STYLE="bezier" WIDTH="thin"/>
 <node TEXT="Channel popup" ID="ID_124971233" CREATED="1368993741633" MODIFIED="1368993744707" COLOR="#990000">
@@ -81,7 +81,7 @@
 </node>
 </node>
 </node>
-<node TEXT="Limitations" POSITION="left" ID="ID_620090245" CREATED="1369144490887" MODIFIED="1369144495378" COLOR="#0033ff">
+<node TEXT="Limitations" FOLDED="true" POSITION="left" ID="ID_620090245" CREATED="1369144490887" MODIFIED="1369144495378" COLOR="#0033ff">
 <font SIZE="18"/>
 <edge STYLE="sharp_bezier" WIDTH="8"/>
 <node TEXT="CTCP status only allows for 2 minute average bandwidth" ID="ID_317292530" CREATED="1369144496574" MODIFIED="1369144519900" COLOR="#00b439">

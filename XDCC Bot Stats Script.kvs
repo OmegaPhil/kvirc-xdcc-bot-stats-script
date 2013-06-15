@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # EVENTS BLOCK
 # Intercepting channel messages
-event(OnChannelMessage,XDCCBotStatsScript)
+event(OnChannelMessage, XDCCBotStatsScript)
 {
     # $0 = source nick
     # $1 = source username
@@ -51,7 +51,7 @@ event(OnChannelMessage,XDCCBotStatsScript)
 
 # Intercepting CTCP status replies
 # Example: 'CTCP stat reply from XDCCBot [~BotNick@normally.a.vhost]: 1045 1355566 121234 180989072 9 100 0 500 0 0 99406.4 0 566486 4720.7 95907.9'
-event(OnCTCPReply,XDCCBotStatsScript)
+event(OnCTCPReply, XDCCBotStatsScript)
 {
     /*
     $0 = source nick
@@ -75,11 +75,11 @@ event(OnCTCPReply,XDCCBotStatsScript)
     %xDCCBot = $0
 
     # Generating bot identifier and checking if it is registered
-    %xDCCBotIdentifier = $context.networkName" "%xDCCBot
+    %xDCCBotIdentifier = "$context.networkName %xDCCBot"
     if (%XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} == "")
     {
         # It isn't - warning user and exiting
-        warning "XDCC Bot Stats Script - XDCC bot '%xDCCBot' appears to have responded to a CTCP status request, however it is not registered with this script"
+        warning "XDCC bot '%xDCCBot' appears to have responded to a CTCP status request, however it is not registered with this script"
         return
     }
 
@@ -89,7 +89,7 @@ event(OnCTCPReply,XDCCBotStatsScript)
     # Warning user and exiting when status reply has an invalid number of parameters
     if (%xDCCBotData[]# != 15)
     {
-        warning "XDCC Bot Stats Script - XDCC bot '%xDCCBot' has responded to a CTCP status request with an invalid number of parameters (%xDCCBotData[]#)"
+        warning "XDCC bot '%xDCCBot' has responded to a CTCP status request with an invalid number of parameters (%xDCCBotData[]#)"
         return
     }
 
@@ -117,7 +117,7 @@ event(OnCTCPReply,XDCCBotStatsScript)
 }
 
 # Intercepting DCC admin chats
-event(OnDCCChatMessage,XDCCBotStatsScript)
+event(OnDCCChatMessage, XDCCBotStatsScript)
 {
     # $0 = message text
     # $1 = DCC session ID
@@ -148,14 +148,14 @@ event(OnDCCChatMessage,XDCCBotStatsScript)
 }
 
 # Intercepting start events
-event(OnKVIrcStartup,XDCCBotStatsScript)
+event(OnKVIrcStartup, XDCCBotStatsScript)
 {
     # Running XDCCBotStatsScript::Startup
     XDCCBotStatsScript::Startup
 }
 
 # Intercepting inputted text
-event(OnTextInput,XDCCBotStatsScript)
+event(OnTextInput, XDCCBotStatsScript)
 {
     # $0 = text
 
@@ -177,13 +177,13 @@ event(OnTextInput,XDCCBotStatsScript)
 
 # Intercepting failure to send CTCP command as bot isn't on server
 # Example: ':irc.rizon.no 401 OmegaPhil thisuserdoesnotexist :No such nick/channel'
-event(401,XDCCBotStatsScript)
+event(401, XDCCBotStatsScript)
 {
     # Exiting if script is currently off
     if (%XDCCBotStatsScript_Settings{"Status"} == "Off") return
 
     # Setting xDCCBotIdentifier
-    %xDCCBotIdentifier = $context.networkName" "$3
+    %xDCCBotIdentifier = "$context.networkName $3"
 
     # Exiting if the nick isn't a registered XDCC bot
     if (%XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} == "") return
@@ -217,7 +217,7 @@ alias(CanGetBotData)
     if ($0 == "")
     {
         # It hasn't - warning user and exiting
-        warning "XDCC Bot Stats Script - A network must be specified when calling CanGetBotData"
+        warning "A network must be specified when calling CanGetBotData"
         return
     }
 
@@ -228,7 +228,7 @@ alias(CanGetBotData)
     if ($1 == "")
     {
         # It hasn't - warning user and exiting
-        warning "XDCC Bot Stats Script - An XDCC bot must be specified when calling CanGetBotData. Parameters: '$0-'"
+        warning "An XDCC bot must be specified when calling CanGetBotData. Parameters: '$0-'"
         return
     }
 
@@ -251,6 +251,7 @@ alias(CanGetBotData)
 }
 
 # DCCAdminChatAuth alias
+# Internal alias to authenticate during a DCC admin chat event
 # Usage: DCCAdminChatAuth <network> <XDCC bot>
 alias(DCCAdminChatAuth)
 {
@@ -258,7 +259,7 @@ alias(DCCAdminChatAuth)
     if ($0 == "")
     {
         # It hasn't - warning user and exiting
-        warning "XDCC Bot Stats Script - A network must be specified when calling DCCAdminChatAuth"
+        warning "A network must be specified when calling DCCAdminChatAuth"
         return
     }
 
@@ -269,7 +270,7 @@ alias(DCCAdminChatAuth)
     if ($1 == "")
     {
         # It hasn't - warning user and exiting
-        warning "XDCC Bot Stats Script - An XDCC bot must be specified when calling DCCAdminChatAuth. Parameters: '$0-'"
+        warning "An XDCC bot must be specified when calling DCCAdminChatAuth. Parameters: '$0-'"
         return
     }
 
@@ -285,14 +286,14 @@ alias(DCCAdminChatAuth)
         # It should - making sure KVIrc actually knows the bot's flags (have had one example where the bot $IsWellKnown however had blank uflags, even though they were whois'd, clearly ident'd etc... need to prove this is more of a problem before changing this method - would need to move to a custom menu option to DCC chat the bot, then only responding to this bot's subsequent authentication request)
         if ($uflags(%xDCCBot) == "")
         {
-            warning "XDCC Bot Stats Script - A DCC admin chat session has been detected for '%xDCCBot' on '%network', however KVIrc is unable to retrieve the user flags for the bot, meaning whether the bot has identified or not is unknown - not authenticating"
+            warning "A DCC admin chat session has been detected for '%xDCCBot' on '%network', however KVIrc is unable to retrieve the user flags for the bot, meaning whether the bot has identified or not is unknown - not authenticating"
             return
         }
 
         # User flags are present - warning user and exiting if the bot is not ident'd
         if ($str.contains($uflags(%xDCCBot), "r") == 0)
         {
-            warning "XDCC Bot Stats Script - A DCC admin chat session has been detected for '%xDCCBot' on '%network', however the bot is not identified - not authenticating"
+            warning "A DCC admin chat session has been detected for '%xDCCBot' on '%network', however the bot is not identified - not authenticating"
             return
         }
     }
@@ -301,7 +302,7 @@ alias(DCCAdminChatAuth)
     %password = %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"password"}
     if (%password == "")
     {
-        warning "XDCC Bot Stats Script - A DCC admin chat session has been detected for '%xDCCBot' on '%network', however no password is recorded - unable to automatically authenticate"
+        warning "A DCC admin chat session has been detected for '%xDCCBot' on '%network', however no password is recorded - unable to automatically authenticate"
         return
     }
 
@@ -335,7 +336,7 @@ alias(GetDynamicXDCCBotStats)
     if ($0 == "")
     {
         # It hasn't - warning user and exiting
-        warning "XDCC Bot Stats Script - A network must be specified when calling GetDynamicXDCCBotStats"
+        warning "A network must be specified when calling GetDynamicXDCCBotStats"
         return
     }
 
@@ -346,7 +347,7 @@ alias(GetDynamicXDCCBotStats)
     if ($1 == "")
     {
         # It hasn't - warning user and exiting
-        warning "XDCC Bot Stats Script - At least one XDCC bot must be specified when calling GetDynamicXDCCBotStats. Parameters: '$0-'"
+        warning "At least one XDCC bot must be specified when calling GetDynamicXDCCBotStats. Parameters: '$0-'"
         return
     }
 
@@ -360,7 +361,6 @@ alias(GetDynamicXDCCBotStats)
     foreach(%xDCCBot, %xDCCBots)
     {
         # Presence of the desired XDCC Bot (CanGetBotData) is ususally called prior to this function, so doing it here would be duplication
-
         # Obtaining bot's maximum upload speed
         %tempMaxUploadSpeed = $GetXDCCBotData(%network, %xDCCBot, "maxUploadBandwidth")
 
@@ -368,7 +368,7 @@ alias(GetDynamicXDCCBotStats)
         if (%tempMaxUploadSpeed == "")
         {
             # It isn't - warning user and skipping bot
-            warning "XDCC Bot Stats Script - GetDynamicXDCCBotStats is attempting to process %xDCCBot's dynamic stats, however no maximum upload speed has been defined for this bot. Skipping..."
+            warning "GetDynamicXDCCBotStats is attempting to process %xDCCBot's dynamic stats, however no maximum upload speed has been defined for this bot. Skipping..."
             continue
         }
 
@@ -426,62 +426,64 @@ alias(GetDynamicXDCCBotStats)
     # Determining colours
     if ($(%freeSlots / %totalSlots) > 0.5)
     {
-        %slotsColour = "3"
+        %slotsColour = $k(3)
     }
     else
     {
         if ($(%freeSlots / %totalSlots) > 0.25)
         {
-            %slotsColour = "7"
+            %slotsColour = $k(7)
         }
-        else {
-            %slotsColour = "4"
+        else
+        {
+            %slotsColour = $k(4)
         }
     }
     if ($(%freeQueues / %totalQueues) > 0.5)
     {
-        %queuesColour = "3"
+        %queuesColour = $k(3)
     }
     else
     {
         if ($(%freeQueues / %totalQueues) > 0.25)
         {
-            %queuesColour = "7"
+            %queuesColour = $k(7)
         }
         else
         {
-            %queuesColour = "4"
+            %queuesColour = $k(4)
         }
     }
     /*
     if ($(%freeIdleQueues / %totalIdleQueues) > 0.5)
     {
-        %idleQueuesColour = "3"
+        %idleQueuesColour = $k(3)
     }
     else
     {
         if ($(%freeIdleQueues / %totalIdleQueues) > 0.25)
         {
-            %idleQueuesColour = "7"
+            %idleQueuesColour = $k(7)
         }
         else
         {
-            %idleQueuesColour = "4"
+            %idleQueuesColour = $k(4)
         }
     }
     */
     if ($(%twoMinAvgUploadBandwidth / %maxUploadSpeed) > 0.75)
     {
-        %bandwidthColour = "4"
+        %bandwidthColour = $k(4)
     }
-    else {
+    else
+    {
         if ($(%twoMinAvgUploadBandwidth / %maxUploadSpeed) > 0.5)
         {
-            %bandwidthColour = "7"
+            %bandwidthColour = $k(7)
         }
         else
         {
-            %bandwidthColour = "3"
+            %bandwidthColour = $k(3)
         }
     }
 
@@ -493,7 +495,7 @@ alias(GetDynamicXDCCBotStats)
     %twoMinAvgUploadBandwidth = $str.split(".", %twoMinAvgUploadBandwidth)[0]
 
     # Returning dynamic XDCC bot stats - $duration courtesy of Common Scripting Services. Colours do not work if you prepend them to the numbers
-    return "Free slots:%slotsColour %freeSlots / %totalSlots | Free queues:%queuesColour %freeQueues / %totalQueues | 2min avg total speed up:%bandwidthColour %twoMinAvgUploadBandwidth / %maxUploadSpeed KB/Sec | Average per user: %avgSpeedPerUser KB/Sec | Updated $duration(%updatedAgo) ago"
+    return "Free slots:%slotsColour %freeSlots / %totalSlots $o$b|$b Free queues:%queuesColour %freeQueues / %totalQueues $o$b|$b 2min avg total speed up:%bandwidthColour %twoMinAvgUploadBandwidth / %maxUploadSpeed KB/Sec $o$b|$b Average per user: %avgSpeedPerUser KB/Sec $o$b|$b Updated $duration(%updatedAgo) ago"
 }
 
 # GetDynamicXDCCBotStatsOnChan alias
@@ -505,7 +507,7 @@ alias(GetDynamicXDCCBotStatsOnChan)
     if ($0 == "")
     {
         # It hasn't - warning user and exiting
-        warning "XDCC Bot Stats Script - A network must be specified when calling GetDynamicXDCCBotStatsOnChan"
+        warning "A network must be specified when calling GetDynamicXDCCBotStatsOnChan"
         return
     }
 
@@ -516,14 +518,14 @@ alias(GetDynamicXDCCBotStatsOnChan)
     if ($1 == "")
     {
         # It hasn't - warning user and exiting
-        warning "XDCC Bot Stats Script - A channel must be specified when calling GetDynamicXDCCBotStatsOnChan. Parameters: '$0-'"
+        warning "A channel must be specified when calling GetDynamicXDCCBotStatsOnChan. Parameters: '$0-'"
         return
     }
 
     # Setting channel
     %channel = $1
 
-    # Generating list of bots on channel
+    # Generating array of bots on channel
     %xDCCBots = $GetXDCCBotsOnChan(%network, %channel)
 
     # Initialising statsLines
@@ -548,7 +550,7 @@ alias(GetXDCCBotData)
     if ($0 == "")
     {
         # It hasn't - warning user and exiting
-        warning "XDCC Bot Stats Script - A network must be specified when calling GetXDCCBotData"
+        warning "A network must be specified when calling GetXDCCBotData"
         return
     }
 
@@ -559,7 +561,7 @@ alias(GetXDCCBotData)
     if ($1 == "")
     {
         # It hasn't - warning user and exiting
-        warning "XDCC Bot Stats Script - An XDCC bot nick must be specified when calling GetXDCCBotData. Parameters: '$0-'"
+        warning "An XDCC bot nick must be specified when calling GetXDCCBotData. Parameters: '$0-'"
         return
     }
 
@@ -580,11 +582,11 @@ alias(GetXDCCBotData)
     # Setting dataToGet
     %dataToGet = $2
 
-    # Making sure bot exists
+    # Making sure bot is available
     if ($CanGetBotData(%network, %xDCCBot) == $false)
     {
-        # It doesn't - warning user and exiting
-        warning "XDCC Bot Stats Script - GetXDCCBotData has been called to fetch '%dataToGet' associated with the bot '%xDCCBot' on '%network', however the bot data is unavailable"
+        # It isn't - warning user and exiting
+        warning "GetXDCCBotData has been called to fetch '%dataToGet' associated with the bot '%xDCCBot' on '%network', however the bot data is unavailable"
         return
     }
 
@@ -615,7 +617,7 @@ alias(GetXDCCBotData)
         default
         {
             # Invalid data requested - warning user and exiting
-            warning "XDCC Bot Stats Script - GetXDCCBotData has called to fetch the invalid data '%dataToGet' associated with the bot '%xDCCBot' on '%network' - there is no such data"
+            warning "GetXDCCBotData has called to fetch the invalid data '%dataToGet' associated with the bot '%xDCCBot' on '%network' - there is no such data"
             return
         }
     }
@@ -630,7 +632,7 @@ alias(GetXDCCBotsOnChan)
     if ($0 == "")
     {
         # It hasn't - warning user and exiting
-        warning "XDCC Bot Stats Script - A network must be specified when calling GetXDCCBotsOnChan"
+        warning "A network must be specified when calling GetXDCCBotsOnChan"
         return
     }
 
@@ -641,7 +643,7 @@ alias(GetXDCCBotsOnChan)
     if ($1 == "")
     {
         # It hasn't - warning user and exiting
-        warning "XDCC Bot Stats Script - A channel must be specified when calling GetXDCCBotsOnChan. Parameters: '$0-'"
+        warning "A channel must be specified when calling GetXDCCBotsOnChan. Parameters: '$0-'"
         return
     }
 
@@ -665,7 +667,7 @@ alias(GetXDCCBotsOnChan)
         if (%iRCContext == "")
         {
             # It wasnt - warning user and exiting
-            warning "XDCC Bot Stats Script - GetXDCCBotsOnChan was called, however the specified network ('%network') has not been found. Parameters: '$0-'"
+            warning "GetXDCCBotsOnChan was called, however the specified network ('%network') has not been found. Parameters: '$0-'"
             return
         }
     }
@@ -682,7 +684,7 @@ alias(GetXDCCBotsOnChan)
     if (%channelWindowID == 0)
     {
         # It wasnt - warning user and exiting
-        warning "XDCC Bot Stats Script - GetXDCCBotsOnChan was called, however the specified channel '%channel' has not been found on %network. Parameters: '$0-'"
+        warning "GetXDCCBotsOnChan was called, however the specified channel '%channel' has not been found on '%network'. Parameters: '$0-'"
         return
     }
 
@@ -803,7 +805,7 @@ alias(XDCCBotStatsScript)
         if ($2 == "")
         {
             # No bot was specified - informing user and exiting
-            warning "Please specify a XDCC bot to register. Parameters: '$0-'"
+            warning "Please specify an XDCC bot to register. Parameters: '$0-'"
             return 2
         }
 
@@ -811,7 +813,7 @@ alias(XDCCBotStatsScript)
         %xDCCBot = $2
 
         # Generating bot identifier
-        %xDCCBotIdentifier = %network" "%xDCCBot
+        %xDCCBotIdentifier = "%network %xDCCBot"
 
         # Making sure the bot is not already registered
         if (%XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} != "")
@@ -841,7 +843,7 @@ alias(XDCCBotStatsScript)
                 # Making sure automatic authentication is off
                 if (%XDCCBotStatsScript_Settings{"DCCAdminChatAuthenticate"} == "On")
                 {
-                    # automatic authentication is already on - warning user and exiting
+                    # Automatic authentication is already on - warning user and exiting
                     warning "Authenticate DCC admin chat mode is already on"
                     return
                 }
@@ -859,7 +861,7 @@ alias(XDCCBotStatsScript)
                 # Making sure automatic authentication is on
                 if (%XDCCBotStatsScript_Settings{"DCCAdminChatAuthenticate"} != "On")
                 {
-                    # automatic authentication is already off - warning user and exiting
+                    # Automatic authentication is already off - warning user and exiting
                     warning "Authenticate DCC admin chat mode is already off"
                     return
                 }
@@ -1015,7 +1017,7 @@ alias(XDCCBotStatsScript)
         %xDCCBot = $2
 
         # Generating bot identifier
-        %xDCCBotIdentifier = %network" "%xDCCBot
+        %xDCCBotIdentifier = "%network %xDCCBot"
 
         # Making sure the bot is currently registered
         if (%XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} == "")
@@ -1089,13 +1091,13 @@ alias(XDCCBotStatsScript)
         %xDCCBot = $2
 
         # Generating bot identifier
-        %xDCCBotIdentifier = %network" "%xDCCBot
+        %xDCCBotIdentifier = "%network %xDCCBot"
 
         # Making sure the bot is currently registered
         if (%XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} == "")
         {
             # It isn't - informing user and exiting
-            warning "The XDCC bot '"%xDCCBot"' on '"%network"' is not registered"
+            warning "The XDCC bot '%xDCCBot' on '%network' is not registered"
             return
         }
 
@@ -1159,7 +1161,7 @@ alias(XDCCBotStatsScript)
         # Making sure triggers are currently enabled for below hops users
         if (%XDCCBotStatsScript_XDCCStats{%channelIdentifier}{"ignoreBelowHops"} != "")
         {
-            # It isn't enabled - warning user and exiting
+            # They aren't enabled - warning user and exiting
             warning "XDCC stats triggers are not enabled for below hops users on '%channel' on '%network'"
             return
         }
@@ -1169,7 +1171,7 @@ alias(XDCCBotStatsScript)
         XDCCBotStatsScript::Save
 
         # Informing user
-        echo "XDCC Bot Stats Script - XDCC stats triggers have been disabled for below hops users on %channel"
+        echo "XDCC Bot Stats Script - XDCC stats triggers have been disabled for below hops users on '%channel' on '%network'"
         return
     }
 
@@ -1215,7 +1217,7 @@ alias(XDCCBotStatsScript)
         XDCCBotStatsScript::Save
 
         # Informing user
-        echo "XDCC Bot Stats Script - XDCC stats triggers have been disabled for %channel"
+        echo "XDCC Bot Stats Script - XDCC stats triggers have been disabled for '%channel' on '%network'"
         return
     }
 
@@ -1259,7 +1261,7 @@ alias(XDCCBotStatsScript)
         # Making sure triggers are currently disabled for below hops users
         if (%XDCCBotStatsScript_XDCCStats{%channelIdentifier}{"ignoreBelowHops"} == "")
         {
-            # It isn't disabled - warning user and exiting
+            # They aren't disabled - warning user and exiting
             warning "XDCC stats triggers are not disabled for below hops users on '%channel' on '%network'"
             return
         }
@@ -1269,7 +1271,7 @@ alias(XDCCBotStatsScript)
         XDCCBotStatsScript::Save
 
         # Informing user
-        echo "XDCC Bot Stats Script - XDCC stats triggers have been enabled for below hops users on %channel"
+        echo "XDCC Bot Stats Script - XDCC stats triggers have been enabled for below hops users on on '%channel' on '%network'"
         return
     }
 
@@ -1315,7 +1317,7 @@ alias(XDCCBotStatsScript)
         XDCCBotStatsScript::Save
 
         # Informing user
-        echo "XDCC Bot Stats Script - XDCC stats triggers have been enabled for %channel"
+        echo "XDCC Bot Stats Script - XDCC stats triggers have been enabled for '%channel' on '%network'"
         return
     }
 
@@ -1346,7 +1348,7 @@ alias(XDCCBotStatsScript)
         %xDCCBot = $2
 
         # Generating bot identifier
-        %xDCCBotIdentifier = %network" "%xDCCBot
+        %xDCCBotIdentifier = "%network %xDCCBot"
 
         # Making sure the bot is currently registered
         if (%XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} == "")
@@ -1521,7 +1523,7 @@ alias(XDCCBotStatsScript::RequestStats)
             # Skipping to next bot if the rebind failed
             if ($context.networkName != %xDCCBotDetails[0])
             {
-                warning "XDCC Bot Stats Script - Attempt to rebind to the '%xDCCBotDetails[0]' network in order to issue the CTCP status command to '%xDCCBotDetails[1]' failed!"
+                warning "Attempt to rebind to the '%xDCCBotDetails[0]' network in order to issue the CTCP status command to '%xDCCBotDetails[1]' failed!"
                 continue
             }
         }
@@ -1559,7 +1561,7 @@ alias(XDCCBotStatsScript::Save)
 alias(XDCCBotStatsScript::Startup)
 {
     # Ensuring that dependencies are present
-    if ($aliasBody("CommonScriptingServices::uninstall::uninstall") == "") error "XDCC Bot Stats Script - Common Scripting Services has not been detected - this is required for this script to run"
+    if ($aliasBody("CommonScriptingServices::uninstall::uninstall") == "") error "Common Scripting Services has not been detected - this is required for this script to run"
 
     # Making sure settings directory exists
     if ($file.exists($file.localdir("/scripts/")) == 0) file.mkdir $file.localdir("/scripts/")
@@ -1593,14 +1595,11 @@ alias(XDCCBotStatsScript::Startup)
     %XDCCBotStatsScript_Settings{"Version"} = "0.1"
     %XDCCBotStatsScript_Settings{"URL"} = "https://github.com/OmegaPhil/kvirc-xdcc-bot-stats-script"
 
-    # Intialising timer
-    if (%XDCCBotStatsScript_Settings{"Status"} == "On")
+    # Intialising timer - the timer itself is to run whether the script is on or off, the resulting code checks whether it should run or not
+    timer -p ("XDCCBotStatsScript_StatsTimer", 30000)
     {
-        timer -p ("XDCCBotStatsScript_StatsTimer", 30000)
-        {
-            # Requesting stats
-            XDCCBotStatsScript::RequestStats
-        }
+        # Requesting stats
+        XDCCBotStatsScript::RequestStats
     }
 
     # Creating dialogs
@@ -1702,19 +1701,16 @@ alias(XDCCBotStatsScript::Startup)
                 dialog.message -i=$icon("serverinfo") ("Remove Registered XDCC Bot", "Unregistered '%xDCCBot' on '%network'", "escape=Cancel") { }
                 $$->$hide
             }
-
             case(1)
             {
                 # Network wasn't specified
                 dialog.message -i=$icon("socketwarning") ("Remove Registered XDCC Bot", "Please specify a network to unregister an XDCC bot from", "escape=Cancel") { }
             }
-
             case(2)
             {
                 # XDCC bot wasn't specified
                 dialog.message -i=$icon("socketwarning") ("Remove Registered XDCC Bot", "Please specify an XDCC bot to unregister on '%network'", "escape=Cancel") { }
             }
-
             case(3)
             {
                 # XDCC bot isn't registered on network
@@ -1764,7 +1760,6 @@ alias(XDCCBotStatsScript::Startup)
     # Integrating into channel popup
     if ($popup.exists("XDCCBotStatsScript_Channel")) popup.destroy "XDCCBotStatsScript_Channel"
     popup.create "XDCCBotStatsScript_Channel"
-
     popup.addItem("XDCCBotStatsScript_Channel", "Enable XDCC stats triggers",,, \%XDCCBotStatsScript_XDCCStats{\"index\"}{\"\$context.networkName \$target\"} == \"\") 
     {
         # Enabling XDCC triggers in channel
@@ -1832,7 +1827,7 @@ alias(XDCCBotStatsScript::Startup)
     popup.addPrologue("XDCCBotStatsScript_Nicklist")
     {
         # Generating XDCC bot identifier
-        %xDCCBotIdentifier = $context.networkName" "$0
+        %xDCCBotIdentifier = "$context.networkName $0"
 
         # Generating text to display for max upload bandwidth menu item
         if (%XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} == "" || %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"maxUploadBandwidth"} == "")
@@ -1865,7 +1860,7 @@ alias(XDCCBotStatsScript::Startup)
     popup.addItem("XDCCBotStatsScript_Nicklist", "\%:maxUploadBandwidthText",,, \%XDCCBotStatsScript_XDCCBots{\"index\"}{\$context.networkName\" \"\$0} != \"\")
     {
         # Generating XDCC bot identifier
-        %xDCCBotIdentifier = $context.networkName" "$0
+        %xDCCBotIdentifier = "$context.networkName $0"
 
         # Obtaining maxUploadBandwidth
         %maxUploadBandwidth = %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"maxUploadBandwidth"}
@@ -1901,7 +1896,7 @@ alias(XDCCBotStatsScript::Startup)
     popup.addItem("XDCCBotStatsScript_Nicklist", "\%:passwordText",,, \%XDCCBotStatsScript_XDCCBots{\"index\"}{\$context.networkName\" \"\$0} != \"\")
     {
         # Generating XDCC bot identifier
-        %xDCCBotIdentifier = $context.networkName" "$0
+        %xDCCBotIdentifier = "$context.networkName $0"
 
         # Obtaining DCC admin chat password
         %password = %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"password"}
@@ -1937,8 +1932,8 @@ alias(XDCCBotStatsScript::Startup)
 
     # Adding XDCC Bot Stats Script menu to nicklist popup (ensuring that it doesn't exist already)
     popup.delitem -q "channel" "XDCCBotStatsScript_Nicklist"
-    popup.addSeparator "channel" "XDCCBotStatsScript_Nicklist_Separator" %XDCCBotStatsScript_Settings{"Status"} == "On"
-    popup.addExtPopup "channel" "XDCCBotStatsScript_Nicklist" "XDCC Bot Stats Script" "" "XDCCBotStatsScript_Nicklist" %XDCCBotStatsScript_Settings{"Status"} == "On"
+    popup.addSeparator "channel" "XDCCBotStatsScript_Nicklist_Separator" \%XDCCBotStatsScript_Settings{\"Status\"} == \"On\"
+    popup.addExtPopup "channel" "XDCCBotStatsScript_Nicklist" "XDCC Bot Stats Script" "" "XDCCBotStatsScript_Nicklist" \%XDCCBotStatsScript_Settings{\"Status\"} == \"On\"
 
     # Carrying out first stats request
     XDCCBotStatsScript::RequestStats
@@ -1996,10 +1991,10 @@ Item: {index}. Data: Hash of XDCC bots registered with the script, the data is o
 
 Item: {<Bot identifier>}. Data: Hash of information associated with the bot.
 
-    Item: {maxUploadBandwidth}. Data: Stores the bot's configured maximum upload speed (used by !xdccstats etc)
-    Item: {nextStatsRequest). Data: If present, stores the earliest acceptable time to request more stats (e.g. the bot does not exist on the server)
+    Item: {maxUploadBandwidth}. Data: Stores the bot's configured maximum upload speed in KB/Sec (used by !xdccstats etc)
+    Item: {nextStatsRequest). Data: If present, stores the earliest acceptable time to request more stats (e.g. the bot was not present on the server during a request, resulting in the subsequent request being delayed)
     Item: {password}. Data: DCC admin chat password.
-    Item: {requestDelay}. Data: If present, records the number of minutes to delay further stats requests by, increases on non-existent nick between 1 and 10
+    Item: {requestDelay}. Data: If present, records the number of minutes to delay further stats requests by, increases on non-existent bot between 1 and 10
     Item: {stats}. Data: Hash containing statistics extracted from the bot - see the 'status' command in the original iroffer documentation (http://iroffer.org/docs/admin.html), the "/ctcp bot status" bit
 
         Item: {updated}. Data: $unixtime of the last update.
