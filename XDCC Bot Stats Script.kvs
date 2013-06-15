@@ -2,7 +2,6 @@
 # =====================
 
 # Version: 0.1 - remember to update this in the main hash
-# TODO: How to quash notification messages on DCC chat?
 # TODO: Logical pass
 # TODO: Basic documentation on how to use the script (need to add somehitng to Common Scripting Services repo too). Announce on the KVIrc mailing list after this?
 
@@ -131,43 +130,21 @@ event(OnDCCChatMessage,XDCCBotStatsScript)
     %xDCCBot = $dcc.remoteNick
     %network = $context.networkName($dcc.ircContext)
 
-    # Exiting if DCC admin chats should not be automatically authenticated
-    if (%XDCCBotStatsScript_Settings{"DCCAdminChatAuthenticate"} == "") return
-
     # Exiting if the chat does not belong to a tracked bot
     if (%XDCCBotStatsScript_XDCCBots{"index"}{%network %xDCCBot} == "") return
 
-    # Exiting if the message is not a password prompt
-    if (%message != "Enter Your Password:") return
+    # Requesting DCC admin chat authentication if the message is a password prompt and automatic authentication is enabled
+    if (%XDCCBotStatsScript_Settings{"DCCAdminChatAuthenticate"} != "" && %message == "Enter Your Password:") DCCAdminChatAuth %network %xDCCBot
 
-    # Checking if XDCC bot should be identified on the server before authenticating for security purposes
-    if (%XDCCBotStatsScript_Settings{"DCCAdminChatIdentRequired"} != "")
+    # 'Quietening' the message if requested
+    if (%XDCCBotStatsScript_Settings{"DCCAdminChatQuiet"} != "")
     {
-        # It should - making sure KVIrc actually knows the bot's flags (have had one example where the bot $IsWellKnown however had blank uflags, even though they were whois'd, clearly ident'd etc... need to prove this is more of a problem before changing this method - would need to move to a custom menu option to DCC chat the bot, then only responding to this bot's subsequent authentication request)
-        if ($uflags(%xDCCBot) == "")
-        {
-            warning "XDCC Bot Stats Script - A DCC admin chat session has been detected for '%xDCCBot' on '%network', however KVIrc is unable to retrieve the user flags for the bot, meaning whether the bot has identified or not is unknown - not authenticating"
-            return
-        }
+        # Echoing to the window using (presumably) the normal KVIrc codepath but preventing any highlighting, notification etc
+        echoprivmsg --no-flashing --no-highlighting --no-notifier %xDCCBot $dcc.remoteUser $dcc.remoteHost %message
 
-        # User flags are present - warning user and exiting if the bot is not ident'd
-        if ($str.contains($uflags(%xDCCBot), "r") == 0)
-        {
-            warning "XDCC Bot Stats Script - A DCC admin chat session has been detected for '%xDCCBot' on '%network', however the bot is not identified - not authenticating"
-            return
-        }
+        # Preventing KVIrc from processing the message normally
+        halt
     }
-
-    # Warning user if the XDCC bot doesn't have a recorded admin chat password, then exiting
-    %password = %XDCCBotStatsScript_XDCCBots{%network %xDCCBot}{"password"}
-    if (%password == "")
-    {
-        warning "XDCC Bot Stats Script - A DCC admin chat session has been detected for '%xDCCBot' on '%network', however no password is recorded - unable to automatically authenticate"
-        return
-    }
-
-    # Sending the password - there doesn't appear to be a specific way to send a DCC chat message
-    say %password
 }
 
 # Intercepting start events
@@ -259,7 +236,7 @@ alias(CanGetBotData)
     %xDCCBot = $1
 
     # Generating xDCCBotIdentifier
-    %xDCCBotIdentifier = %network" "%xDCCBot
+    %xDCCBotIdentifier = "%network %xDCCBot"
 
     # Returning false if the bot isn't registered or its last update was over 2 minutes ago. Don't use GetXDCCBotData to fetch updated - GetXDCCBotData calls this alias!
     if (%XDCCBotStatsScript_XDCCBots{"index"}{%xDCCBotIdentifier} == "" || %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"} == "" || %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"updated"} == "" || %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"updated"} < ($unixtime - 2 * 60))
@@ -271,6 +248,65 @@ alias(CanGetBotData)
         # Bot is registered and is uptodate - returning $true
         return $true
     }
+}
+
+# DCCAdminChatAuth alias
+# Usage: DCCAdminChatAuth <network> <XDCC bot>
+alias(DCCAdminChatAuth)
+{
+    # Making sure a network has been passed
+    if ($0 == "")
+    {
+        # It hasn't - warning user and exiting
+        warning "XDCC Bot Stats Script - A network must be specified when calling DCCAdminChatAuth"
+        return
+    }
+
+    # Setting network
+    %network = $0
+
+    # Making sure an XDCC bot has been passed
+    if ($1 == "")
+    {
+        # It hasn't - warning user and exiting
+        warning "XDCC Bot Stats Script - An XDCC bot must be specified when calling DCCAdminChatAuth. Parameters: '$0-'"
+        return
+    }
+
+    # Setting xDCCBot
+    %xDCCBot = $1
+
+    # Generating xDCCBotIdentifier
+    %xDCCBotIdentifier = "%network %xDCCBot"
+
+    # Checking if XDCC bot should be identified on the server before authenticating for security purposes
+    if (%XDCCBotStatsScript_Settings{"DCCAdminChatIdentRequired"} != "")
+    {
+        # It should - making sure KVIrc actually knows the bot's flags (have had one example where the bot $IsWellKnown however had blank uflags, even though they were whois'd, clearly ident'd etc... need to prove this is more of a problem before changing this method - would need to move to a custom menu option to DCC chat the bot, then only responding to this bot's subsequent authentication request)
+        if ($uflags(%xDCCBot) == "")
+        {
+            warning "XDCC Bot Stats Script - A DCC admin chat session has been detected for '%xDCCBot' on '%network', however KVIrc is unable to retrieve the user flags for the bot, meaning whether the bot has identified or not is unknown - not authenticating"
+            return
+        }
+
+        # User flags are present - warning user and exiting if the bot is not ident'd
+        if ($str.contains($uflags(%xDCCBot), "r") == 0)
+        {
+            warning "XDCC Bot Stats Script - A DCC admin chat session has been detected for '%xDCCBot' on '%network', however the bot is not identified - not authenticating"
+            return
+        }
+    }
+
+    # Warning user if the XDCC bot doesn't have a recorded admin chat password, then exiting
+    %password = %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"password"}
+    if (%password == "")
+    {
+        warning "XDCC Bot Stats Script - A DCC admin chat session has been detected for '%xDCCBot' on '%network', however no password is recorded - unable to automatically authenticate"
+        return
+    }
+
+    # Sending the password - there doesn't appear to be a specific way to send a DCC chat message
+    say %password
 }
 
 # GetDynamicXDCCBotStats alias
@@ -891,6 +927,57 @@ alias(XDCCBotStatsScript)
             {
                 # Invalid mode passed - warning user and exiting
                 warning "Please specify a valid authenticatedccident mode ('$1' passed)"
+                return
+            }
+        }
+    }
+
+    # Intercepting dccadminchatquiet request
+    if ($0 == "dccadminchatquiet")
+    {
+        # Dealing with requested mode
+        switch ($1)
+        {
+            case ("on")
+            {
+                # Making sure quietening is off
+                if (%XDCCBotStatsScript_Settings{"DCCAdminChatQuiet"} != "")
+                {
+                    # Quietening is already on - warning user and exiting
+                    warning "Quiet mode is already enabled for DCC admin chats"
+                    return
+                }
+
+                # Enabling quietening and saving
+                %XDCCBotStatsScript_Settings{"DCCAdminChatQuiet"} = "On"
+                XDCCBotStatsScript::Save
+
+                # Informing user quietening has been turned on
+                echo "DCC admin chats with registered XDCC bots will now run in quiet mode - no highlights or notifications will result from their messages"
+                return
+            }
+            case ("off")
+            {
+                # Making sure quietening is on
+                if (%XDCCBotStatsScript_Settings{"DCCAdminChatQuiet"} == "")
+                {
+                    # Quietening is already off - warning user and exiting
+                    warning "Quiet mode is already disabled for DCC admin chats"
+                    return
+                }
+
+                # Disabling quietening and saving
+                %XDCCBotStatsScript_Settings{"DCCAdminChatQuiet"} = ""
+                XDCCBotStatsScript::Save
+
+                # Informing user quietening has been turned off
+                echo "DCC admin chats with registered XDCC bots will no longer run in quiet mode"
+                return
+            }
+            default
+            {
+                # Invalid mode passed - warning user and exiting
+                warning "Please specify a valid dccadminchatquiet mode ('$1' passed)"
                 return
             }
         }
@@ -1666,6 +1753,8 @@ alias(XDCCBotStatsScript::Startup)
     popup.addItem("XDCCBotStatsScript_Main", "Automatically authenticate DCC admin chats",,, \%XDCCBotStatsScript_Settings{\"DCCAdminChatAuthenticate\"} != \"On\") XDCCBotStatsScript authenticatedcc on
     popup.addItem("XDCCBotStatsScript_Main", "Require XDCC bot to identify before authentication", $icon("accept"),, \%XDCCBotStatsScript_Settings{\"DCCAdminChatIdentRequired\"} == \"On\") XDCCBotStatsScript authenticatedccident off
     popup.addItem("XDCCBotStatsScript_Main", "Require XDCC bot to identify before authentication (INSECURE - please enable!)",,, \%XDCCBotStatsScript_Settings{\"DCCAdminChatIdentRequired\"} != \"On\") XDCCBotStatsScript authenticatedccident on
+    popup.addItem("XDCCBotStatsScript_Main", "Quieten DCC admin chat messages (no highlight, notification etc)", $icon("accept"),, \%XDCCBotStatsScript_Settings{\"DCCAdminChatQuiet\"} != \"\") XDCCBotStatsScript dccadminchatquiet off
+    popup.addItem("XDCCBotStatsScript_Main", "Quieten DCC admin chat messages (no highlight, notification etc)",,, \%XDCCBotStatsScript_Settings{\"DCCAdminChatQuiet\"} == \"\") XDCCBotStatsScript dccadminchatquiet on
     popup.delitem -q "Scripts" "XDCCBotStatsScript_Main"
     popup.addExtPopup "Scripts" "XDCCBotStatsScript_Main" "XDCC Bot Stats Script" "" "XDCCBotStatsScript_Main"
 
@@ -1860,6 +1949,7 @@ alias(XDCCBotStatsScript::uninstall::uninstall)
 {
     # All events and aliases should be uninstalled here
     alias(CanGetBotData) {}
+    alias(DCCAdminChatAuth) {}
     alias(GetDynamicXDCCBotStats) {}
     alias(GetDynamicXDCCBotStatsOnChan) {}
     alias(GetXDCCBotData) {}
@@ -1893,6 +1983,7 @@ XDCCBotStatsScript_Settings format:
 
 Item: {DCCAdminChatAuthenticate}. Data: On/Off - determines whether the script should attempt automatic DCC admin chat authentication with registered bots
 Item: {DCCAdminChatIdentRequired}. Data: On/Off - determines whether the script should only automatically authenticate a DCC admin chat with the bot if it is identified on the server
+Item: {DCCAdminChatQuiet}. Presence indicates the script should 'quieten' (no highlighting or notification) DCC admin chat messages
 Item: {Name}.
 Item: {Status}. Data: On/Off - status of script.
 Item: {URL}. Data: Github URL for the script repository.
