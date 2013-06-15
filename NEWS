@@ -1,3 +1,8 @@
+v0.2 (15.06.13):
+Ability to remove registered XDCC bots via GUI.
+Optional automatic authentication of DCC admin chats when the bot's password is configured.
+DCC admin chat messages from registered bots can now be optionally 'quietened' so that no nick highlight, notification or flashing events are generated when messages are received.
+
 v0.1 (25.05.13):
 GetDynamicXDCCBotStats: Deal with 0 valid bots.
 XDCCBotStatsScript: Allow user running this script to skip rank check for XDCC triggers in the channel (previously you needed to be hop+ if set in the channel).
