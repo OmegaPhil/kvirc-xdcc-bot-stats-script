@@ -95,12 +95,14 @@ event(OnCTCPReply, XDCCBotStatsScript)
     # Debug code
     # echo "Average bandwidth 120 secs: %xDCCBotData[13]"
 
-    # Recording stats data. Note that two reported items are always 0 (items 8 and 9 of the array) - hence 15 items and 13 recorded
+    # Recording stats data. As of iroffer dinoex mod v3.30, items 8 and 9 are no longer always returned as 0, and actually report on the idle queue (feature request: http://iroffer.dinoex.de/issues/171)
     %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"updated"} = $unixtime
     %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"numberOfSlotsInUse"} = %xDCCBotData[4]
     %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"totalSlots"} = %xDCCBotData[5]
     %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"numberInMainQueue"} = %xDCCBotData[6]
     %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"sizeOfMainQueue"} = %xDCCBotData[7]
+    %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"numberInIdleQueue"} = %xDCCBotData[8]
+    %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"sizeOfIdleQueue"} = %xDCCBotData[9]
     %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"packSpeedRecord"} = %xDCCBotData[10]
     %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"serverMessageQueue"} = %xDCCBotData[11]
     %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"dataSentToNetwork120Secs"} = %xDCCBotData[12]
@@ -320,11 +322,9 @@ alias(GetDynamicXDCCBotStats)
     %totalSlots = 0.0
     %numberInMainQueue = 0.0
     %totalQueues = 0.0
-    # %idlenumberInMainQueue = 0.0
-    # %tempIdlenumberInMainQueue = 0.0
-    # %freeIdleQueues = 0.0
-    # %totalIdleQueues = 0.0
-    # %tempTotalIdleQueues = 0.0
+    %numberInIdleQueue = 0.0
+    %totalIdleQueues = 0.0
+    %freeIdleQueues = 0.0
     %twoMinAvgUploadBandwidth = 0.0
     %tempTwoMinAvgUploadBandwidth = 0.0
     %maxUploadSpeed = 0
@@ -371,15 +371,13 @@ alias(GetDynamicXDCCBotStats)
             continue
         }
 
-        # Obtaining bot data, with some data manipulation. Idle queue data isn't available through CTCP status. Note that the best bandwidth data is only a 2 minute average now!
+        # Obtaining bot data, with some data manipulation. Idle queue data isn't normally available through CTCP status - when it isn't, 0 is always returned. Note that the best bandwidth data is only a 2 minute average now!
         %totalSlots = $(%totalSlots + $GetXDCCBotData(%network, %xDCCBot, "totalSlots"))
         %slotsInUse = $(%slotsInUse + $GetXDCCBotData(%network, %xDCCBot, "numberOfSlotsInUse"))
         %totalQueues = $(%totalQueues + $GetXDCCBotData(%network, %xDCCBot, "sizeOfMainQueue"))
         %numberInMainQueue = $(%numberInMainQueue + $GetXDCCBotData(%network, %xDCCBot, "numberInMainQueue"))
-        # %tempTotalIdleQueues = $GetXDCCBotData(%network, %xDCCBot, TotalIdleQueues)
-        # %totalIdleQueues = $(%totalIdleQueues + %tempTotalIdleQueues))
-        # %tempIdlenumberInMainQueue = $GetXDCCBotData(%network, %xDCCBot, NumberOfIdlenumberInMainQueue)
-        # %idlenumberInMainQueue = $(%idlenumberInMainQueue + %tempIdlenumberInMainQueue)
+        %totalIdleQueues = $(%totalIdleQueues + $GetXDCCBotData(%network, %xDCCBot, "sizeOfIdleQueue"))
+        %numberInIdleQueue = $(%numberInIdleQueue + $GetXDCCBotData(%network, %xDCCBot, "numberInIdleQueue"))
         %tempTwoMinAvgUploadBandwidth = $GetXDCCBotData(%network, %xDCCBot, "averageBandwidth120Secs")
         %twoMinAvgUploadBandwidth = $(%twoMinAvgUploadBandwidth + %tempTwoMinAvgUploadBandwidth)
         %tempUpdatedAgo = $($unixtime - $GetXDCCBotData(%network, %xDCCBot, "updated"))
@@ -394,13 +392,16 @@ alias(GetDynamicXDCCBotStats)
     # Detecting no valid bots and exiting
     if (%totalSlots == 0) return
 
+    # Debug code
+    # echo "\%totalIdleQueues: %totalIdleQueues\n\%numberInIdleQueue: %numberInIdleQueue"
+
     # Calculating free slots/queues
     %freeSlots = $(%totalSlots - %slotsInUse)
     if (%freeSlots < 0) %freeSlots = 0
     %freeQueues = $(%totalQueues - %numberInMainQueue)
     if (%freeQueues < 0) %freeQueues = 0
-    # %freeIdleQueues = $(%totalIdleQueues - %idleQueuesInUse)
-    # if (%freeIdleQueues < 0) %freeIdleQueues = 0
+    %freeIdleQueues = $(%totalIdleQueues - %numberInIdleQueue)
+    if (%freeIdleQueues < 0) %freeIdleQueues = 0
 
     # Rounding upload bandwidth (courtesy of Common Scripting Services)
     %twoMinAvgUploadBandwidth = $trueround(%twoMinAvgUploadBandwidth)
@@ -419,6 +420,7 @@ alias(GetDynamicXDCCBotStats)
     # Debug code
     /*echo "\%freeSlots: %freeSlots\n\%totalSlots: %totalSlots"
     echo "\%freeQueues: %freeQueues\n\%totalQueues: %totalQueues"
+    echo "\%freeIdleQueues: %freeIdleQueues\n\%totalIdleQueues: %totalIdleQueues"
     echo "\%maxUploadSpeed: %maxUploadSpeed\n\%slotsInUse: %slotsInUse"
     echo "\%xDCCBots: %xDCCBots"*/
 
@@ -453,23 +455,28 @@ alias(GetDynamicXDCCBotStats)
             %queuesColour = $k(4)
         }
     }
-    /*
-    if ($(%freeIdleQueues / %totalIdleQueues) > 0.5)
+    if (%totalIdleQueues == 0.0)
     {
-        %idleQueuesColour = $k(3)
+        %idleQueuesColour = $k(4)
     }
     else
     {
-        if ($(%freeIdleQueues / %totalIdleQueues) > 0.25)
+        if ($(%freeIdleQueues / %totalIdleQueues) > 0.5)
         {
-            %idleQueuesColour = $k(7)
+            %idleQueuesColour = $k(3)
         }
         else
         {
-            %idleQueuesColour = $k(4)
+            if ($(%freeIdleQueues / %totalIdleQueues) > 0.25)
+            {
+                %idleQueuesColour = $k(7)
+            }
+            else
+            {
+                %idleQueuesColour = $k(4)
+            }
         }
     }
-    */
     if ($(%twoMinAvgUploadBandwidth / %maxUploadSpeed) > 0.75)
     {
         %bandwidthColour = $k(4)
@@ -491,10 +498,15 @@ alias(GetDynamicXDCCBotStats)
     %totalSlots = $str.split(".", %totalSlots)[0]
     %freeQueues = $str.split(".", %freeQueues)[0]
     %totalQueues = $str.split(".", %totalQueues)[0]
+    %freeIdleQueues = $str.split(".", %freeIdleQueues)[0]
+    %totalIdleQueues = $str.split(".", %totalIdleQueues)[0]
     %twoMinAvgUploadBandwidth = $str.split(".", %twoMinAvgUploadBandwidth)[0]
 
+    # Most bots either do not report idle queues yet or do not have them enabled, so only reporting on them if some have been detected
+    if (%totalIdleQueues > 0) %idleQueuesText = "$o$b|$b Free idle queues:%idleQueuesColour %freeIdleQueues / %totalIdleQueue
+
     # Returning dynamic XDCC bot stats - $duration courtesy of Common Scripting Services. Colours do not work if you prepend them to the numbers
-    return "Free slots:%slotsColour %freeSlots / %totalSlots $o$b|$b Free queues:%queuesColour %freeQueues / %totalQueues $o$b|$b 2min avg total speed up:%bandwidthColour %twoMinAvgUploadBandwidth / %maxUploadSpeed KB/Sec $o$b|$b Average per user: %avgSpeedPerUser KB/Sec $o$b|$b Updated $duration(%updatedAgo) ago"
+    return "Free slots:%slotsColour %freeSlots / %totalSlots $o$b|$b Free queues:%queuesColour %freeQueues / %totalQueues %idleQueuesText$o$b|$b 2min avg total speed up:%bandwidthColour %twoMinAvgUploadBandwidth / %maxUploadSpeed KB/Sec $o$b|$b Average per user: %avgSpeedPerUser KB/Sec $o$b|$b Updated $duration(%updatedAgo) ago"
 }
 
 # GetDynamicXDCCBotStatsOnChan alias
@@ -542,7 +554,7 @@ alias(GetDynamicXDCCBotStatsOnChan)
 }
 
 # GetXDCCBotData alias
-# Usage: GetXDCCBotData <network> <XDCC bot> <Data to get, 'updated'/'maxUploadBandwidth'/'password'/'numberOfSlotsInUse'/'totalSlots'/'numberInMainQueue'/'sizeOfMainQueue'/'packSpeedRecord'/'serverMessageQueue'/'dataSentToNetwork120Secs'/'averageBandwidth120Secs'/'recordAverageBandwidth'/'numberPacks'/'offeredPacksSize'/'completedTransfers'/'transfered'>
+# Usage: GetXDCCBotData <network> <XDCC bot> <Data to get, 'updated'/'maxUploadBandwidth'/'password'/'numberOfSlotsInUse'/'totalSlots'/'numberInMainQueue'/'sizeOfMainQueue'/'numberInIdleQueue'/'sizeOfIdleQueue'/'packSpeedRecord'/'serverMessageQueue'/'dataSentToNetwork120Secs'/'averageBandwidth120Secs'/'recordAverageBandwidth'/'numberPacks'/'offeredPacksSize'/'completedTransfers'/'transfered'>
 alias(GetXDCCBotData)
 {
     # Making sure a network has been passed
@@ -598,6 +610,8 @@ alias(GetXDCCBotData)
         case ("totalSlots") { }
         case ("numberInMainQueue") { }
         case ("sizeOfMainQueue") { }
+        case ("numberInIdleQueue") { }
+        case ("sizeOfIdleQueue") { }
         case ("packSpeedRecord") { }
         case ("serverMessageQueue") { }
         case ("dataSentToNetwork120Secs") { }
