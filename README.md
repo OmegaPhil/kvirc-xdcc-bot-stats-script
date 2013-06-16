@@ -5,7 +5,7 @@ XDCC Bot Stats Script aims to:
 * Provide functions to embed stats in normal triggers such as !xdcc, or anything you can think of, such as your own scripts.
 * Allow for convenient DCC admin chats with bots.
 
-Last updated on 15.06.13 for v0.2.
+Last updated on 16.06.13 for v0.3.
 
 
 Installation
@@ -87,7 +87,7 @@ The following is example !xdcc code, from an OnChannelMessage event handler that
         notice -q $0 "Official XDCC bots:"
         notice -q $0 $k(0,0).
         notice -q $0 "ExampleXDCCBot (1Gbit shared, "$k(4)"MINSPEED 10KB/Sec"$k", OVH, FR, courtesy of botmaster): http://this.is.a.packlist/packlist.txt"
-        if ($aliasBody("GetDynamicXDCCBotStats") != "" && $CanGetBotData($context.networkName, "ExampleXDCCBot") == $true) notice -q $0 $GetDynamicXDCCBotStats($context.networkName, "ExampleXDCCBot")
+        if ($aliasBody("XDCCBotStatsScript::GetDynamicXDCCBotStats") != "" && $XDCCBotStatsScript::CanGetBotData($context.networkName, "ExampleXDCCBot") == $true) notice -q $0 $XDCCBotStatsScript::GetDynamicXDCCBotStats($context.networkName, "ExampleXDCCBot")
         notice -q $0 $k(0,0).
         notice -q $0 $k(4)"Note with 4GB+ files, you will need mIRC 6.33 or above (GNU/Linux: irssi (commandline), Xchat (GUI) work) to download correctly."
         notice -q $0 "== If packlists are unreachable, try '/msg <botname> xdcc search <string to search for>' without the angle brackets =="
@@ -95,7 +95,7 @@ The following is example !xdcc code, from an OnChannelMessage event handler that
         return
     }
 
-This ensures that the GetDynamicXDCCBotStats alias exists and the XDCC bot data is available before sending the notice containing the embedded stats. The following is the result:
+This ensures that the XDCCBotStatsScript::GetDynamicXDCCBotStats alias exists and the XDCC bot data is available before sending the notice containing the embedded stats. The following is the result:
 
 ![!xdcc in channel](https://f92fac806bf10a96c0b8-8a0a46e5f1a5cc9854958bc3503f0f88.ssl.cf1.rackcdn.com/media_entries/3142/channel_xdcc_trigger_example.png)
 
