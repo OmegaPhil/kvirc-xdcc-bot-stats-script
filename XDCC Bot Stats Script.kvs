@@ -503,7 +503,7 @@ alias(GetDynamicXDCCBotStats)
     %twoMinAvgUploadBandwidth = $str.split(".", %twoMinAvgUploadBandwidth)[0]
 
     # Most bots either do not report idle queues yet or do not have them enabled, so only reporting on them if some have been detected
-    if (%totalIdleQueues > 0) %idleQueuesText = "$o$b|$b Free idle queues:%idleQueuesColour %freeIdleQueues / %totalIdleQueue
+    if (%totalIdleQueues > 0) %idleQueuesText = "$o$b|$b Free idle queues:%idleQueuesColour %freeIdleQueues / %totalIdleQueue "
 
     # Returning dynamic XDCC bot stats - $duration courtesy of Common Scripting Services. Colours do not work if you prepend them to the numbers
     return "Free slots:%slotsColour %freeSlots / %totalSlots $o$b|$b Free queues:%queuesColour %freeQueues / %totalQueues %idleQueuesText$o$b|$b 2min avg total speed up:%bandwidthColour %twoMinAvgUploadBandwidth / %maxUploadSpeed KB/Sec $o$b|$b Average per user: %avgSpeedPerUser KB/Sec $o$b|$b Updated $duration(%updatedAgo) ago"
