@@ -1449,6 +1449,13 @@ alias(XDCCBotStatsScript)
         %xDCCBots[] = $XDCCBotStatsScript::GetXDCCBotsOnChan($context.networkName, %channel)
         %xDCCBotsString = $str.replace(%xDCCBots, ",", " ")
 
+        # Sending useful message to the channel and exiting if no bots are available
+        if (%xDCCBots[]# == 0)
+        {
+            msg %channel "No registered XDCC bots available in the channel!"
+            return
+        }
+
         # Generating statsLines and bots string
         %statsLines = $array()
 
