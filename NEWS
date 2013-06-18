@@ -1,3 +1,9 @@
+v0.3 (18.06.13):
+Markdown documentation created.
+All aliases except for the main one have been moved into the XDCCBotStatsScript namespace, since they aren't user aliases (so shouldn't spam up the normal command namespace).
+Send useful message to channel on trigger if no bots are available.
+Idle queues are now reported courtesy of dinoex adding this information to iroffer's CTCP status reply (http://iroffer.dinoex.de/issues/171).
+
 v0.2 (15.06.13):
 Ability to remove registered XDCC bots via GUI.
 Optional automatic authentication of DCC admin chats when the bot's password is configured.
