@@ -2,7 +2,6 @@
 # =====================
 
 # Version: 0.2 - remember to update this in the main hash
-# TODO: Basic documentation on how to use the script (need to add somehitng to Common Scripting Services repo too). Announce on the KVIrc mailing list after this?
 
 /*
 Copyright (C) 2013 OmegaPhil (OmegaPhil+KVIrc@gmail.com)
@@ -1488,7 +1487,7 @@ alias(XDCCBotStatsScript)
             }
 
             # Increasing delay
-            %delay += 1000
+            %delay += 1500
         }
         return
     }
