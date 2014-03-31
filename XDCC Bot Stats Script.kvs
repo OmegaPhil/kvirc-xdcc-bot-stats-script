@@ -1,10 +1,10 @@
 # XDCC Bot Stats Script
 # =====================
 
-# Version: 0.2 - remember to update this in the main hash
+# Version: 0.3 - remember to update this in the main hash
 
 /*
-Copyright (C) 2013 OmegaPhil (OmegaPhil+KVIrc@gmail.com)
+Copyright (C) 2014 OmegaPhil (OmegaPhil+KVIrc@gmail.com)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -1611,7 +1611,7 @@ alias(XDCCBotStatsScript::Startup)
     if (%XDCCBotStatsScript_Settings{"DCCAdminChatIdentRequired"} == "") %XDCCBotStatsScript_Settings{"DCCAdminChatIdentRequired"} = "On"
     if (%XDCCBotStatsScript_Settings{"DCCAdminChatAuthenticate"} == "") %XDCCBotStatsScript_Settings{"DCCAdminChatAuthenticate"} = "Off"
     %XDCCBotStatsScript_Settings{"Name"} = "XDCC Bot Stats Script"
-    %XDCCBotStatsScript_Settings{"Version"} = "0.2"
+    %XDCCBotStatsScript_Settings{"Version"} = "0.3"
     %XDCCBotStatsScript_Settings{"URL"} = "https://github.com/OmegaPhil/kvirc-xdcc-bot-stats-script"
 
     # Intialising timer - the timer itself is to run whether the script is on or off, the resulting code checks whether it should run or not
@@ -1717,23 +1717,23 @@ alias(XDCCBotStatsScript::Startup)
             case(0)
             {
                 # Success
-                dialog.message -i=$icon("serverinfo") ("Remove Registered XDCC Bot", "Unregistered '%xDCCBot' on '%network'", "escape=Cancel") { }
+                dialog.message("Remove Registered XDCC Bot", "Unregistered '%xDCCBot' on '%network'", "Information") { }
                 $$->$hide
             }
             case(1)
             {
                 # Network wasn't specified
-                dialog.message -i=$icon("socketwarning") ("Remove Registered XDCC Bot", "Please specify a network to unregister an XDCC bot from", "escape=Cancel") { }
+                dialog.message("Remove Registered XDCC Bot", "Please specify a network to unregister an XDCC bot from", "Warning") { }
             }
             case(2)
             {
                 # XDCC bot wasn't specified
-                dialog.message -i=$icon("socketwarning") ("Remove Registered XDCC Bot", "Please specify an XDCC bot to unregister on '%network'", "escape=Cancel") { }
+                dialog.message("Remove Registered XDCC Bot", "Please specify an XDCC bot to unregister on '%network'", "Warning") { }
             }
             case(3)
             {
                 # XDCC bot isn't registered on network
-                dialog.message -i=$icon("socketwarning") ("Remove Registered XDCC Bot", "'%xDCCBot' is not registered on '%network'", "escape=Cancel") { }
+                dialog.message("Remove Registered XDCC Bot", "'%xDCCBot' is not registered on '%network'", "Warning") { }
             }
         }
     }

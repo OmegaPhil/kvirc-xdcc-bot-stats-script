@@ -1,3 +1,6 @@
+v0.4 (31.03.14):
+Invalid dialog.message calls fixed (icon problems).
+
 v0.3 (18.06.13):
 Markdown documentation created.
 All aliases except for the main one have been moved into the XDCCBotStatsScript namespace, since they aren't user aliases (so shouldn't spam up the normal command namespace).
