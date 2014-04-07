@@ -1770,10 +1770,15 @@ alias(XDCCBotStatsScript::Startup)
     popup.addItem("XDCCBotStatsScript_Main", "Require XDCC bot to identify before authentication (INSECURE - please enable!)",,, \%XDCCBotStatsScript_Settings{\"DCCAdminChatIdentRequired\"} != \"On\") XDCCBotStatsScript authenticatedccident on
     popup.addItem("XDCCBotStatsScript_Main", "Quieten DCC admin chat messages (no highlight, notification etc)", $icon("accept"),, \%XDCCBotStatsScript_Settings{\"DCCAdminChatQuiet\"} != \"\") XDCCBotStatsScript dccadminchatquiet off
     popup.addItem("XDCCBotStatsScript_Main", "Quieten DCC admin chat messages (no highlight, notification etc)",,, \%XDCCBotStatsScript_Settings{\"DCCAdminChatQuiet\"} == \"\") XDCCBotStatsScript dccadminchatquiet on
+
+    # Making sure the main 'Scripts' menu command exists
+    if ($(!($popup.exists("Scripts")))) popup.create "Scripts"
+
+    # Adding XDCC Bot Stats Script to Scripts popup
     popup.delitem -q "Scripts" "XDCCBotStatsScript_Main"
     popup.addExtPopup "Scripts" "XDCCBotStatsScript_Main" "XDCC Bot Stats Script" "" "XDCCBotStatsScript_Main"
 
-    # Tying main script popup to KVIrc menu (appears after 'Scripting')
+    # Tying main script popup to KVIrc menu (appears after 'Scripting') - this must be done on every program startup
     setmenu -i=2 "Scripts" "Scripts"
 
     # Integrating into channel popup
