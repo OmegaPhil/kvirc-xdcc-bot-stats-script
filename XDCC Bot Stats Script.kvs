@@ -1493,8 +1493,8 @@ alias(XDCCBotStatsScript)
             }
         }
 
-        # Appending totals line and advert - 'Totals' confuses $b
-        %statsLines[%statsLines[]#] = "$b""Totals:$b $XDCCBotStatsScript::GetDynamicXDCCBotStats($context.networkName, %xDCCBotsString)"
+        # Appending totals line (if more than one bot is reported on) and advert - 'Totals' confuses $b
+        if (%xDCCBots[]# > 1) %statsLines[%statsLines[]#] = "$b""Totals:$b $XDCCBotStatsScript::GetDynamicXDCCBotStats($context.networkName, %xDCCBotsString)"
         %statsLines[%statsLines[]#] = "%XDCCBotStatsScript_Settings{"Name"} v%XDCCBotStatsScript_Settings{"Version"} $b|$b GPL'd for KVIrc $b|$b %XDCCBotStatsScript_Settings{"URL"}"
 
         # Looping for all stats lines
