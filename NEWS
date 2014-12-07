@@ -1,3 +1,8 @@
+v1 (7.12.14):
+!xdccstats and !xdccstatstotal now take an optional space-delimited list of wildcard patterns allowing you to only report on specific bots in the channel (see the documentation).
+!xdccstats no longer reports a totals line when only one bot is returned.
+This script has been doing its job for long enough now, version 1 reached!
+
 v0.4 (31.03.14):
 Invalid dialog.message calls fixed (icon problems).
 
