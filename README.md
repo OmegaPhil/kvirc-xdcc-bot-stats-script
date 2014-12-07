@@ -158,4 +158,4 @@ Please create an issue on the [Github issue tracker](https://github.com/OmegaPhi
 Contact Details
 ===============
 
-OmegaPhil+KVIrc.Script@gmail.com
+OmegaPhil@startmail.com
