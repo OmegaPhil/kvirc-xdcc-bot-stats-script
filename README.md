@@ -76,6 +76,27 @@ All triggers can be generated from the GUI, or entered manually as usual.
 
 !xdccstatstotal only outputs the totals line (along with the advert).
 
+In case you have a channel with many bots registered with this script, you may want to only report on a few of them - both triggers support one or more wildcard patterns, e.g. on a channel with the following registered bots idling:
+
+Arutha  
+Hatsu|Arutha  
+Kaio-Ken  
+Kuruma|Arutha
+
+    !xdccstats Arutha
+
+will just report on Arutha,
+
+    !xdccstats *Arutha
+
+will report on all bots including 'Arutha' in their nick in this example.
+
+You can pass multiple patterns separated by spaces to report on more than one specific bot or a more complicated set of them:
+
+    !xdccstats Arutha Kuruma|Arutha
+
+and so on. Wildcard characters are * (any character(s)) and ? (any single character) as usual.
+
 
 Including Stats In A Normal !xdcc Trigger
 =========================================

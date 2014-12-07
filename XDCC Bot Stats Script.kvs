@@ -34,15 +34,15 @@ event(OnChannelMessage, XDCCBotStatsScript)
     # Exiting if script is currently off
     if (%XDCCBotStatsScript_Settings{"Status"} == "Off") return
 
-    # Detecting XDCC stats triggers and routing to the main alias
-    if ($3 == "!xdccstats")
+    # Detecting XDCC stats triggers and routing to the main alias, passing any potential bot nick patterns to match on as the last parameter
+    if ($str.left($3, 15) == "!xdccstatstotal")
     {
-        XDCCBotStatsScript "xdccstats" $target $0
+        XDCCBotStatsScript "xdccstatstotal" $target $0 $str.mid($3, 16)
         return
     }
-    if ($3 == "!xdccstatstotal")
+    if ($str.left($3, 10) == "!xdccstats")
     {
-        XDCCBotStatsScript "xdccstatstotal" $target $0
+        XDCCBotStatsScript "xdccstats" $target $0 $str.mid($3, 11)
         return
     }
 }
@@ -162,15 +162,15 @@ event(OnTextInput, XDCCBotStatsScript)
     # Exiting if script is currently off
     if (%XDCCBotStatsScript_Settings{"Status"} == "Off") return
 
-    # Detecting XDCC stats triggers and routing to the main alias
+    # Detecting XDCC stats triggers and routing to the main alias, passing any potential bot nick patterns to match on as the last parameter
     if ($str.left($0, 15) == "!xdccstatstotal")
     {
-        XDCCBotStatsScript "xdccstatstotal" $target $my.nick
+        XDCCBotStatsScript "xdccstatstotal" $target $my.nick $str.mid($0, 16)
         return
     }
     if ($str.left($0, 10) == "!xdccstats")
     {
-        XDCCBotStatsScript "xdccstats" $target $my.nick
+        XDCCBotStatsScript "xdccstats" $target $my.nick $str.mid($0, 11)
         return
     }
 }
@@ -637,7 +637,7 @@ alias(XDCCBotStatsScript::GetXDCCBotData)
 
 # XDCCBotStatsScript::GetXDCCBotsOnChan alias
 # Returns an array of registered and available bots idling in the specified channel
-# Usage: XDCCBotStatsScript::GetXDCCBotsOnChan <network> <channel>
+# Usage: XDCCBotStatsScript::GetXDCCBotsOnChan <network> <channel> [<bot nick wildcard patterns>]
 alias(XDCCBotStatsScript::GetXDCCBotsOnChan)
 {
     # Making sure a network has been passed
@@ -661,6 +661,9 @@ alias(XDCCBotStatsScript::GetXDCCBotsOnChan)
 
     # Setting channel
     %channel = $1
+
+    # Setting optional bot nick patterns if present
+    if ($2 != "") %botNickPatterns = $2
 
     # Checking if the script is bound to the correct network
     if ($context.networkName != %network)
@@ -724,6 +727,25 @@ alias(XDCCBotStatsScript::GetXDCCBotsOnChan)
         # Skipping bot if data is unavailable
         if ($XDCCBotStatsScript::CanGetBotData(%network, %xDCCBot) == $false) continue
 
+        # Checking if only specific bots should be returned
+        if (%botNickPatterns != "")
+        {
+            # Looping over individual patterns, escaping if there is a hit
+            %includeBot = $false
+            foreach(%pattern, $str.split(" ", %botNickPatterns))
+            {
+                # Exact wildcard pattern match (i.e. don't match a substring)
+                if ($str.match(%pattern, %xDCCBot, "e"))
+                {
+                    %includeBot = $true
+                    break
+                }
+            }
+
+            # Moving to next bot if it isn't to be included
+            if (%includeBot == $false) continue
+        }
+
         # Bot is idling - appending to xDCCBotsToReturn
         %xDCCBotsToReturn[%xDCCBotsToReturn[]#] = %xDCCBot
     }
@@ -733,11 +755,11 @@ alias(XDCCBotStatsScript::GetXDCCBotsOnChan)
 }
 
 # XDCCBotStatsScript alias
-# Usage: XDCCBotStatsScript <command>. <nothing>: Script status. h/help: This usage information. on: Turn script on. off: Turn script off. addbot <Network name> <XDCC bot>: Register bot. deletebot <Network name> <XDCC bot>: Unregister bot. listbots: List all registered XDCC bots. password <Network name> <XDCC bot>: Record DCC admin chat password. upload <Network name> <XDCC bot>: Record maximum upload speed (KB/Sec). xdccstats <channel> <nick>: Generate an XDCC stats response on the appropriate channel. xdccstatstotal <channel> <nick>: Generate an XDCC stats total response on the appropriate channel. statsenablechannel <network> <channel>: Enable XDCC stats triggers on channel. statsdisablechannel <network> <channel>: Disable XDCC stats triggers on channel. authenticatedcc <on/off>: Enable/disable automatic DCC admin chat authentication when a password is stored. authenticatedccident <on/off>: Require (or not) that an XDCC bot be identified on the server before automatically authenticating a DCC admin chat. 
+# Usage: XDCCBotStatsScript <command>. <nothing>: Script status. h/help: This usage information. on: Turn script on. off: Turn script off. addbot <Network name> <XDCC bot>: Register bot. deletebot <Network name> <XDCC bot>: Unregister bot. listbots: List all registered XDCC bots. password <Network name> <XDCC bot>: Record DCC admin chat password. upload <Network name> <XDCC bot>: Record maximum upload speed (KB/Sec). xdccstats <channel> <nick> [<bot nick wildcard pattern(s)>]: Generate an XDCC stats response on the appropriate channel, including specified bots if desired. xdccstatstotal <channel> <nick> [<bot nick wildcard pattern(s)>]: Generate an XDCC stats total response on the appropriate channel, including specified bots if desired. statsenablechannel <network> <channel>: Enable XDCC stats triggers on channel. statsdisablechannel <network> <channel>: Disable XDCC stats triggers on channel. authenticatedcc <on/off>: Enable/disable automatic DCC admin chat authentication when a password is stored. authenticatedccident <on/off>: Require (or not) that an XDCC bot be identified on the server before automatically authenticating a DCC admin chat.
 alias(XDCCBotStatsScript)
 {
     # Variable allocation
-    %usageInstructions = "Usage: XDCCBotStatsScript <command>. <nothing>: Script status. h/help: This usage information. on: Turn script on. off: Turn script off. addbot <Network name> <XDCC bot>: Register bot. deletebot <Network name> <XDCC bot>: Unregister bot. listbots: List all registered XDCC bots. password <Network name> <XDCC bot>: Record DCC admin chat password. upload <Network name> <XDCC bot>: Record maximum upload speed (KB/Sec). xdccstats <channel> <nick>: Generate an XDCC stats response on the appropriate channel. xdccstatstotal <channel> <nick>: Generate an XDCC stats total response on the appropriate channel. statsenablechannel <network> <channel>: Enable XDCC stats triggers on channel. statsdisablechannel <network> <channel>: Disable XDCC stats triggers on channel. authenticatedcc <on/off>: Enable/disable automatic DCC admin chat authentication when a password is stored. authenticatedccident <on/off>: Require (or not) that an XDCC bot be identified on the server before automatically authenticating a DCC admin chat."
+    %usageInstructions = "Usage: XDCCBotStatsScript <command>. <nothing>: Script status. h/help: This usage information. on: Turn script on. off: Turn script off. addbot <Network name> <XDCC bot>: Register bot. deletebot <Network name> <XDCC bot>: Unregister bot. listbots: List all registered XDCC bots. password <Network name> <XDCC bot>: Record DCC admin chat password. upload <Network name> <XDCC bot>: Record maximum upload speed (KB/Sec). xdccstats <channel> <nick> [<bot nick wildcard pattern(s)>]: Generate an XDCC stats response on the appropriate channel, including specified bots if desired. xdccstatstotal <channel> <nick> [<bot nick wildcard pattern(s)>]: Generate an XDCC stats total response on the appropriate channel, including specified bots if desired. statsenablechannel <network> <channel>: Enable XDCC stats triggers on channel. statsdisablechannel <network> <channel>: Disable XDCC stats triggers on channel. authenticatedcc <on/off>: Enable/disable automatic DCC admin chat authentication when a password is stored. authenticatedccident <on/off>: Require (or not) that an XDCC bot be identified on the server before automatically authenticating a DCC admin chat."
 
     # Intercepting status request (nothing passed to the alias)
     if ($0 == "")
@@ -1416,6 +1438,9 @@ alias(XDCCBotStatsScript)
         # Setting nick
         %nick = $2
 
+        # Setting optional bot nick patterns if present
+        if ($3 != "") %botNickPatterns = $3-
+
         # Generating channel identifier
         %channelIdentifier = "$context.networkName %channel"
 
@@ -1444,8 +1469,8 @@ alias(XDCCBotStatsScript)
         %delay = 100
         %i = 1
 
-        # Obtaining array and string of idling bots on the channel
-        %xDCCBots[] = $XDCCBotStatsScript::GetXDCCBotsOnChan($context.networkName, %channel)
+        # Obtaining array and string of idling bots on the channel, according to passed bot nick patterns
+        %xDCCBots[] = $XDCCBotStatsScript::GetXDCCBotsOnChan($context.networkName, %channel, %botNickPatterns)
         %xDCCBotsString = $str.replace(%xDCCBots, ",", " ")
 
         # Sending useful message to the channel and exiting if no bots are available
