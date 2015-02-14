@@ -36,9 +36,9 @@ In a KVIrc console window:
 General Configuration
 =====================
 
-The 'Scripts' menu is created on the main KVIrc menubar, which then hosts the XDCC Bot Stats Script menu. Here you can turn the script on/off, list and remove registered XDCC bots, and configure DCC admin chat settings:
+The 'Scripts' menu is created on the main KVIrc menubar, which then hosts the XDCC Bot Stats Script menu. Here you can turn the script on/off, list, remove  and reenable registered XDCC bots, and configure DCC admin chat settings:
 
-![Script configuration](https://f92fac806bf10a96c0b8-8a0a46e5f1a5cc9854958bc3503f0f88.ssl.cf1.rackcdn.com/media_entries/3138/script_configuration.png)
+![Script configuration](https://github.com/OmegaPhil/kvirc-xdcc-bot-stats-script/blob/master/doc/script_configuration.png?raw=true)
 
 
 XDCC Bot Registration
@@ -48,13 +48,23 @@ XDCC Bot Registration
 
 Right-click the relevant bot in the nicklist, and go XDCC Bot Stats Script -> Register <nick>:
 
-![Register a bot](https://f92fac806bf10a96c0b8-8a0a46e5f1a5cc9854958bc3503f0f88.ssl.cf1.rackcdn.com/media_entries/3115/register_bot.png)
+![Register a bot](https://github.com/OmegaPhil/kvirc-xdcc-bot-stats-script/blob/master/doc/register_bot.png?raw=true)
 
 After registration you can define the bot's maximum upload speed (e.g. 12800KB/Sec for a 100Mbit bot, **must be configured for normal triggers to work**), and optionally the bot's DCC admin chat password, which is used for automatic authentication when a DCC admin chat is initiated:
 
-![Configured bot](https://f92fac806bf10a96c0b8-8a0a46e5f1a5cc9854958bc3503f0f88.ssl.cf1.rackcdn.com/media_entries/3116/registered_bot_configured.png)
+![Configured bot](https://github.com/OmegaPhil/kvirc-xdcc-bot-stats-script/blob/master/doc/registered_bot_configured.png?raw=true)
 
 Once a bot is registered, CTCP status commands will be sent as mentioned above. If the bot isn't on the server when the request is made, the next request is made in a minute, and on subsequent failures an extra minute is added to the delay up until the limit of 10 minutes between the requests.
+
+If a bot hasn't been seen for 2 days (that is, two days from the first CTCP status message KVIrc sent since it started up), it is disabled - this script will no longer try to contact the bot.
+
+Disabled bots have ' (Disabled)' added in their output (see 'List registered XDCC bots') - you can remove them via the 'Remove registered XDCC bot...' dialog:
+
+![Remove registered XDCC bot](https://github.com/OmegaPhil/kvirc-xdcc-bot-stats-script/blob/master/doc/remove_registered_bot.png?raw=true)
+
+To reenable a disabled bot, see the 'Reenable disabled XDCC bot...' dialog:
+
+![Reenable disabled XDCC bot](https://github.com/OmegaPhil/kvirc-xdcc-bot-stats-script/blob/master/doc/reenable_disabled_xdcc_bot.png?raw=true)
 
 
 Channel Triggers
@@ -62,17 +72,17 @@ Channel Triggers
 
 By default, triggers (!xdccstats and !xdccstatstotal) are not enabled on a channel. Right-click the channel -> XDCC Bot Stats Script -> Enable XDCC Stats triggers:
 
-![Enable channel triggers](https://f92fac806bf10a96c0b8-8a0a46e5f1a5cc9854958bc3503f0f88.ssl.cf1.rackcdn.com/media_entries/3128/channel_triggers_enable.png)
+![Enable channel triggers](https://github.com/OmegaPhil/kvirc-xdcc-bot-stats-script/blob/master/doc/channel_triggers_enable.png?raw=true)
 
 **After enabling triggers, make sure to disable triggers for below-hops users as appropriate for your channel**  - these triggers are intended for privileged users and are a spam risk:
 
-![Disable triggers for below hops](https://f92fac806bf10a96c0b8-8a0a46e5f1a5cc9854958bc3503f0f88.ssl.cf1.rackcdn.com/media_entries/3140/channel_triggers_disable_below_hops.png)
+![Disable triggers for below hops](https://github.com/OmegaPhil/kvirc-xdcc-bot-stats-script/blob/master/doc/channel_triggers_disable_below_hops.png?raw=true)
 
 All triggers can be generated from the GUI, or entered manually as usual.
 
 !xdccstats works out the registered bots on the channel, then sends a stats line for each, including a final total stats line:
 
-![!xdccstats in channel](https://f92fac806bf10a96c0b8-8a0a46e5f1a5cc9854958bc3503f0f88.ssl.cf1.rackcdn.com/media_entries/3141/channel_triggers_xdccstats.png)
+![!xdccstats in channel](https://github.com/OmegaPhil/kvirc-xdcc-bot-stats-script/blob/master/doc/channel_triggers_xdccstats.png?raw=true)
 
 !xdccstatstotal only outputs the totals line (along with the advert).
 
