@@ -5,7 +5,7 @@ XDCC Bot Stats Script aims to:
 * Provide functions to embed stats in normal triggers such as !xdcc, or anything you can think of, such as your own scripts.
 * Allow for convenient DCC admin chats with bots.
 
-Last updated on 07.12.14 for v1.
+Last updated on 14.02.15 for v1.1.
 
 
 Installation

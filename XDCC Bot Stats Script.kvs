@@ -1,10 +1,10 @@
 # XDCC Bot Stats Script
 # =====================
 
-# Version: 1 - remember to update this in the main hash
+# Version: 1.1 - remember to update this in the main hash
 
 /*
-Copyright (C) 2014 OmegaPhil (OmegaPhil@startmail.com)
+Copyright (C) 2014-2015 OmegaPhil (OmegaPhil@startmail.com)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -1711,7 +1711,7 @@ alias(XDCCBotStatsScript::Startup)
     if (%XDCCBotStatsScript_Settings{"DCCAdminChatIdentRequired"} == "") %XDCCBotStatsScript_Settings{"DCCAdminChatIdentRequired"} = "On"
     if (%XDCCBotStatsScript_Settings{"DCCAdminChatAuthenticate"} == "") %XDCCBotStatsScript_Settings{"DCCAdminChatAuthenticate"} = "Off"
     %XDCCBotStatsScript_Settings{"Name"} = "XDCC Bot Stats Script"
-    %XDCCBotStatsScript_Settings{"Version"} = "1"
+    %XDCCBotStatsScript_Settings{"Version"} = "1.1"
     %XDCCBotStatsScript_Settings{"URL"} = "https://github.com/OmegaPhil/kvirc-xdcc-bot-stats-script"
 
     # Intialising timer - the timer itself is to run whether the script is on or off, the resulting code checks whether it should run or not

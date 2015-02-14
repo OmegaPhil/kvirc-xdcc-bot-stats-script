@@ -1,3 +1,7 @@
+v1.1 (14.02.15):
+The backoff implementation of CTCP status messages when bots weren't present was completely broken - this has now been fixed.
+After 2 days of no CTCP status replies, bots are disabled (and therefore never contacted again) - a new dialog has been created to allow reenabling of bots (fixes https://github.com/OmegaPhil/kvirc-xdcc-bot-stats-script/issues/3).
+
 v1 (7.12.14):
 !xdccstats and !xdccstatstotal now take an optional space-delimited list of wildcard patterns allowing you to only report on specific bots in the channel (see the documentation).
 !xdccstats no longer reports a totals line when only one bot is returned.
