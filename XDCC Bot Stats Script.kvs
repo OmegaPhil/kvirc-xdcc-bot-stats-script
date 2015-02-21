@@ -204,11 +204,11 @@ event(401, XDCCBotStatsScript)
         else
         {
             # 10 minute delay has been reached previously - if no successful update has been seen for the bot (which is valid if the script has just been started up, not necessarily meaning the bot hasn't been successfully contacted for ages), setting an artificial one 55 minutes ago (1+2+3...+10 minute delays) simply to allow easy tracking of '2 days later' without having to force constantly saving XDCC bot data
-            if (%XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"updated"} == "") %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"updated"} = $($unixtime - 3300)
+            if (%XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"updated"} == "") %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"updated"} = $($unixtime - 3300)
             else
             {
                 # Last successful update available - if the bot has been unreachable for 2 days, disabling further requests and warning user - I want to know about this, hence dialog
-                if ($unixtime >= $(%XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"updated"} + 172800))
+                if ($unixtime >= $(%XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"updated"} + 172800))
                 {
                     %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"disabled"} = $true
 
