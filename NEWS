@@ -1,3 +1,6 @@
+v1.2 (27.09.15):
+Fixes to properly deal with disabling bots that haven't been present for >=2 days (https://github.com/OmegaPhil/kvirc-xdcc-bot-stats-script/issues/5 and another without a ticket).
+
 v1.1 (14.02.15):
 The backoff implementation of CTCP status messages when bots weren't present was completely broken - this has now been fixed.
 After 2 days of no CTCP status replies, bots are disabled (and therefore never contacted again) - a new dialog has been created to allow reenabling of bots (fixes https://github.com/OmegaPhil/kvirc-xdcc-bot-stats-script/issues/3).
