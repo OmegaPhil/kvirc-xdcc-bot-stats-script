@@ -211,6 +211,7 @@ event(401, XDCCBotStatsScript)
                 if ($unixtime >= $(%XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"stats"}{"updated"} + 172800))
                 {
                     %XDCCBotStatsScript_XDCCBots{%xDCCBotIdentifier}{"disabled"} = $true
+                    XDCCBotStatsScript::Save
 
                     warning "XDCC bot '%xDCCBot' has not been reachable for at least two days, disabling"
 
